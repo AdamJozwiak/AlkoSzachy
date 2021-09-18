@@ -1,11 +1,14 @@
 class Player {
   String name;
-  int totalScore;
+  int totalDrinks;
   bool isWhite;
 
   Player(String name) {
     this.name = name;
-    this.totalScore = 0;
+    this.totalDrinks = 0;
     this.isWhite = true;
   }
+
+  Map toJson() =>
+      {'name': name, 'totalDrinks': totalDrinks, 'isWhite': isWhite};
 }
