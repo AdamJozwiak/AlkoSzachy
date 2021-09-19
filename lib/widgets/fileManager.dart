@@ -1,55 +1,70 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:math';
 import 'package:alkochin/models/player.dart';
 import 'package:path_provider/path_provider.dart';
 
 class FileManager {
-  File saveFile;
-  Directory directory;
-  final fileName = 'savedPlayers.json';
-  bool fileExists = false;
-  List<Player> fileContent;
+  File _saveFile;
+  Directory _directory;
+  final _fileName = 'savedPlayers.json';
+  bool _fileExists;
+  List<Player> _fileContent;
 
   FileManager() {
-    getApplicationDocumentsDirectory().then((Directory directory) {
-      this.directory = directory;
-      saveFile = new File(this.directory.path + "/" + fileName);
-      fileExists = saveFile.existsSync();
-      if (fileExists) {
-        fileContent = jsonDecode(saveFile.readAsStringSync());
-      }
-    });
+    this._fileContent = new List<Player>();
+    _fileExists = false;
+  }
+
+  void init() async {
+    this._directory = await getApplicationDocumentsDirectory();
+    this._saveFile = new File(this._directory.path + "/" + this._fileName);
+    this._fileExists = this._saveFile.existsSync();
+    print('Czy plik istnieje?: ' + this._fileName);
+    if (_fileExists) {
+      this._fileContent = readFile();
+    }
   }
 
   void writeToFile(List<Player> players) {
-    // Map<String, String> content = {key: value};
-    if (fileExists) {
-      // Map<String, String> jsonFileContent =
-      //     json.decode(saveFile.readAsStringSync());
-      // jsonFileContent.addAll(content);
-      // saveFile.writeAsStringSync(jsonEncode(jsonFileContent));
-      List<Player> jsonFileContent = jsonDecode(saveFile.readAsStringSync());
+    if (_fileExists) {
+      List<Player> jsonFileContent = readFile();
       int playerIterator = 0;
-      while (playerIterator < jsonFileContent.length) {
-        Player savedPlayer = jsonFileContent[playerIterator];
-        Player inGamePlayer = players[playerIterator];
-        if (savedPlayer.name == inGamePlayer.name) {
-          if (savedPlayer.totalDrinks < inGamePlayer.totalDrinks) {
-            savedPlayer.totalDrinks = inGamePlayer.totalDrinks;
-          }
-          if (savedPlayer.isWhite != inGamePlayer.isWhite) {
-            savedPlayer.isWhite = inGamePlayer.isWhite;
-          }
+      int biggerListLength = max(players.length, jsonFileContent.length);
+      while (playerIterator < biggerListLength) {
+        bool playerNotFound = true;
+        if (jsonFileContent.isNotEmpty &&
+            playerIterator < jsonFileContent.length) {
+          players.forEach((element) {
+            if (element.name == jsonFileContent[playerIterator].name) {
+              if (jsonFileContent[playerIterator].totalDrinks <
+                  element.totalDrinks) {
+                jsonFileContent[playerIterator].totalDrinks =
+                    element.totalDrinks;
+              }
+              if (jsonFileContent[playerIterator].isWhite != element.isWhite) {
+                jsonFileContent[playerIterator].isWhite = element.isWhite;
+              }
+              playerNotFound = false;
+            }
+          });
+        }
+        if (playerNotFound) {
+          jsonFileContent.add(players[playerIterator]);
+          print('Dodano gracza: ' + players[playerIterator].name);
+          jsonFileContent.forEach((player) {
+            print(player.name);
+          });
         }
         playerIterator++;
       }
-      jsonFileContent.addAll(players);
+      _saveFile.writeAsStringSync(jsonEncode(jsonFileContent));
     } else {
       _createFile(players);
     }
-    fileContent = jsonDecode(saveFile.readAsStringSync());
+    this._fileContent = readFile();
     print('Nowy content: ');
-    fileContent.forEach((element) {
+    _fileContent.forEach((element) {
       print('Gracz: ' +
           element.name +
           ', kolor biały?:' +
@@ -58,17 +73,40 @@ class FileManager {
   }
 
   void _createFile(List<Player> players) {
-    saveFile.createSync();
-    fileExists = true;
+    _saveFile.createSync();
+    _fileExists = true;
     print('Zapisuję pierwszy raz: ' + jsonEncode(players));
-    saveFile.writeAsStringSync(jsonEncode(players));
+    _saveFile.writeAsStringSync(jsonEncode(players));
   }
 
-  void _deleteFile() {
-    getApplicationDocumentsDirectory().then((Directory directory) {
-      if (fileExists) {
-        saveFile.deleteSync();
+  void deleteFromFile(Player player) {
+    _fileContent.forEach((element) {
+      if (element.name == player.name) {
+        _fileContent.remove(element);
       }
     });
+    _saveFile.writeAsStringSync(jsonEncode(_fileContent));
+  }
+
+  List<Player> readFile() {
+    List<Player> loadedList = new List();
+    List<dynamic> decoded = jsonDecode(this._saveFile.readAsStringSync());
+    decoded.forEach((element) {
+      loadedList.add(new Player.mapped(
+          element['name'], element['totalDrinks'], element['isWhite']));
+    });
+    return loadedList;
+  }
+
+  // void _deleteFile() {
+  //   getApplicationDocumentsDirectory().then((Directory directory) {
+  //     if (_fileExists) {
+  //       _saveFile.deleteSync();
+  //     }
+  //   });
+  // }
+
+  List<Player> get saveContent {
+    return _fileContent;
   }
 }

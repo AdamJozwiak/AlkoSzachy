@@ -1,3 +1,5 @@
+// ignore_for_file: unused_impor, deprecated_member_use, unused_import
+
 import 'dart:io';
 import 'package:alkochin/models/player.dart';
 import 'package:alkochin/widgets/fileManager.dart';
@@ -15,17 +17,34 @@ class _TeamSelectionState extends State<TeamSelection> {
   List<Player> players;
   List<Player> whitePlayers;
   List<Player> blackPlayers;
-  String playerName = '';
+  String _playerName = '';
   final _formKey = GlobalKey<FormState>();
   final _playerNameSize = 30.0;
+  FileManager saveFile;
+  bool saveFileInitialized = false;
 
   @override
-  void initState() async {
-    super.initState();
-    FileManager saveFile = new FileManager();
+  void initState() {
     this.players = List<Player>();
     this.whitePlayers = List<Player>();
     this.blackPlayers = List<Player>();
+    this.saveFile = new FileManager();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await saveFile.init();
+      if (saveFile.saveContent.isNotEmpty) {
+        players = saveFile.saveContent;
+        players.forEach((player) {
+          if (player.isWhite) {
+            whitePlayers.add(player);
+          } else {
+            blackPlayers.add(player);
+          }
+        });
+        setState(() {});
+      } else
+        print('Brak zawartości');
+    });
+    super.initState();
   }
 
   @override
@@ -158,6 +177,7 @@ class _TeamSelectionState extends State<TeamSelection> {
     double _boxSpacing = 40;
     double _noPlayersLabelSize = 70.0;
     List<List<bool>> checkBoxState = new List();
+    String _occupiedName = '';
     initialPlayers.forEach((player) {
       checkBoxState
           .add([player.isWhite, !player.isWhite]); // Checkbox: White, Black
@@ -172,6 +192,7 @@ class _TeamSelectionState extends State<TeamSelection> {
           width: 300.0,
           child: ListView.builder(
               shrinkWrap: true,
+              // ignore: missing_return
               itemBuilder: (BuildContext context, int index) {
                 Player thisPlayer;
                 if (index < initialPlayers.length) {
@@ -185,17 +206,15 @@ class _TeamSelectionState extends State<TeamSelection> {
                           padding: const EdgeInsets.all(8.0),
                           child: Container(
                             width: 90.0,
-                            child: Flexible(
-                              child: RichText(
-                                strutStyle: StrutStyle(fontSize: 25.0),
-                                overflow: TextOverflow.ellipsis,
-                                text: TextSpan(
-                                    text: thisPlayer.name,
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontFamily: 'EnchantedLand',
-                                        fontSize: 25.0)),
-                              ),
+                            child: RichText(
+                              strutStyle: StrutStyle(fontSize: 25.0),
+                              overflow: TextOverflow.ellipsis,
+                              text: TextSpan(
+                                  text: thisPlayer.name,
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontFamily: 'EnchantedLand',
+                                      fontSize: 25.0)),
                             ),
                           ),
                         ),
@@ -229,6 +248,7 @@ class _TeamSelectionState extends State<TeamSelection> {
                               });
                             } else {
                               changeTeam(thisPlayer, true);
+                              savePlayer(thisPlayer);
                               stateSetter(() {
                                 checkBoxState[index] = [true, false];
                               });
@@ -263,6 +283,7 @@ class _TeamSelectionState extends State<TeamSelection> {
                               });
                             } else {
                               changeTeam(thisPlayer, false);
+                              savePlayer(thisPlayer);
                               stateSetter(() {
                                 checkBoxState[index] = [false, true];
                               });
@@ -286,6 +307,7 @@ class _TeamSelectionState extends State<TeamSelection> {
                                   blackPlayers.remove(thisPlayer);
                                 }
                                 players.remove(thisPlayer);
+                                saveFile.deleteFromFile(thisPlayer);
                                 stateSetter(() {});
                                 setState(() {});
                               },
@@ -331,8 +353,11 @@ class _TeamSelectionState extends State<TeamSelection> {
                 style: TextStyle(fontSize: 30.0),
                 decoration:
                     InputDecoration(errorStyle: TextStyle(fontSize: 25.0)),
-                onChanged: (value) => playerName = value,
+                onChanged: (value) => _playerName = value,
                 validator: (value) {
+                  if (value == _occupiedName) {
+                    return 'Ta nazwa jest już zajęta!';
+                  }
                   return (value == null || value.isEmpty)
                       ? 'Nazwa nie może być pusta'
                       : null;
@@ -349,18 +374,25 @@ class _TeamSelectionState extends State<TeamSelection> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(60.0))),
             onPressed: () {
-              if (_formKey.currentState.validate()) {
-                String result = playerName[0].toUpperCase();
-                for (int i = 1; i < playerName.length; i++) {
-                  result += playerName[i];
+              players.forEach((element) {
+                if (element.name == _playerName) {
+                  _occupiedName = element.name;
                 }
-                players.add(Player(result));
+              });
+              if (_formKey.currentState.validate()) {
+                String result = _playerName[0].toUpperCase();
+                for (int i = 1; i < _playerName.length; i++) {
+                  result += _playerName[i];
+                }
+                Player newPlayer = new Player(result);
+                players.add(newPlayer);
                 if (players.isNotEmpty && players.last.isWhite) {
                   whitePlayers.add(players.last);
                 } else if (players.isNotEmpty && !players.last.isWhite) {
                   blackPlayers.add(players.last);
                 }
                 _textController.clear();
+                savePlayer(newPlayer);
                 stateSetter(() {});
               }
               setState(() {});
@@ -371,6 +403,20 @@ class _TeamSelectionState extends State<TeamSelection> {
             )),
       ],
     );
+  }
+
+  void savePlayer(Player player) {
+    bool playerNotFound = true;
+    players.forEach((element) {
+      if (element.name == player.name) {
+        element = player;
+        playerNotFound = false;
+      }
+    });
+    if (playerNotFound) {
+      players.add(player);
+    }
+    saveFile.writeToFile(players);
   }
 
   void changeTeam(Player player, bool white) {
