@@ -1,3 +1,5 @@
+import 'package:alkochin/models/player.dart';
+import 'package:alkochin/widgets/file_manager.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -11,13 +13,15 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   double timer;
   final _formKey = GlobalKey<FormState>();
-  bool buttonError;
+  List<bool> buttonError = new List(3);
+  List<Player> players;
 
   @override
   void initState() {
     super.initState();
-    buttonError = false;
+    buttonError = [false, false, false];
     timer = 0.0;
+    players = new List();
   }
 
   @override
@@ -67,12 +71,15 @@ class _HomePageState extends State<HomePage> {
                 child: Form(
                   key: _formKey,
                   child: TextFormField(
+                    initialValue: timer != 0.0 ? timer.toString() : '',
                     decoration: InputDecoration(
+                        hintText: timer.toString(),
                         border: OutlineInputBorder(),
                         filled: true,
                         prefixIcon: Icon(Icons.timer),
                         suffix: Text(
                           'minut',
+                          textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 25.0),
                         ),
                         errorStyle:
@@ -91,6 +98,7 @@ class _HomePageState extends State<HomePage> {
                       if (_formKey.currentState.validate()) {
                         setState(() {
                           timer = double.parse(value);
+                          buttonError[0] = false;
                         });
                       }
                     },
@@ -121,16 +129,63 @@ class _HomePageState extends State<HomePage> {
                 height: 30.0,
               ),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  //Check if timer was set
                   if (timer != null && timer > 0.5) {
                     setState(() {
-                      buttonError = false;
+                      buttonError[0] = false;
                     });
-                    Navigator.pushNamed(context, '/game', arguments: timer);
                   } else {
                     setState(() {
-                      buttonError = true;
+                      buttonError[0] = true;
                     });
+                    return;
+                  }
+
+                  //Read file
+                  FileManager fileManager = new FileManager();
+                  await fileManager.init();
+                  this.players = fileManager.readFile();
+                  if (this.players.isEmpty) {
+                    setState(() {
+                      buttonError[1] = true;
+                    });
+                    return;
+                  } else if (this.players.length >= 2) {
+                    List<bool> differentTeam = new List(2);
+                    differentTeam = [false, false];
+
+                    //Check whether there is at least one player in each team
+                    this.players.forEach((element) {
+                      if (element.isWhite) {
+                        differentTeam[0] = true;
+                      } else {
+                        differentTeam[1] = true;
+                      }
+                    });
+                    if (differentTeam[0] == true && differentTeam[1] == true) {
+                      setState(() {
+                        buttonError[2] = false;
+                      });
+                    } else {
+                      setState(() {
+                        buttonError[2] = true;
+                      });
+                      return;
+                    }
+                  } else {
+                    setState(() {
+                      buttonError[1] = false;
+                      buttonError[2] = true;
+                    });
+                    return;
+                  }
+
+                  //Check if every condition is met
+                  if (buttonError[0] == false &&
+                      buttonError[1] == false &&
+                      buttonError[2] == false) {
+                    Navigator.pushNamed(context, '/game', arguments: timer);
                   }
                 },
                 child: Text('Graj!',
@@ -150,13 +205,23 @@ class _HomePageState extends State<HomePage> {
               SizedBox(
                 height: 20.0,
               ),
-              Visibility(
-                visible: buttonError,
-                child: Text(
-                  'Długość gry musi być większa niż 30 sek!',
-                  style: TextStyle(fontSize: 25.0, color: Colors.red[400]),
-                ),
-              )
+              Column(children: [
+                if (buttonError[0])
+                  Text(
+                    'Długość gry musi być większa niż 30 sek!',
+                    style: TextStyle(fontSize: 25.0, color: Colors.red[400]),
+                  )
+                else if (buttonError[1])
+                  Text(
+                    'Brak graczy.',
+                    style: TextStyle(fontSize: 25.0, color: Colors.red[400]),
+                  )
+                else if (buttonError[2])
+                  Text(
+                    'Musi być przynajmniej jeden gracz w każdej drużynie.',
+                    style: TextStyle(fontSize: 25.0, color: Colors.red[400]),
+                  ),
+              ])
             ],
           ),
         ),
