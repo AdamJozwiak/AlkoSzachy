@@ -20,7 +20,6 @@ class FileManager {
     this._directory = await getApplicationDocumentsDirectory();
     this._saveFile = new File(this._directory.path + "/" + this._fileName);
     this._fileExists = this._saveFile.existsSync();
-    print('Czy plik istnieje?: ' + this._fileName);
     if (_fileExists) {
       this._fileContent = readFile();
     }
@@ -51,10 +50,6 @@ class FileManager {
         }
         if (playerNotFound) {
           jsonFileContent.add(players[playerIterator]);
-          print('Dodano gracza: ' + players[playerIterator].name);
-          jsonFileContent.forEach((player) {
-            print(player.name);
-          });
         }
         playerIterator++;
       }
@@ -63,19 +58,11 @@ class FileManager {
       _createFile(players);
     }
     this._fileContent = readFile();
-    print('Nowy content: ');
-    _fileContent.forEach((element) {
-      print('Gracz: ' +
-          element.name +
-          ', kolor biały?:' +
-          element.isWhite.toString());
-    });
   }
 
   void _createFile(List<Player> players) {
     _saveFile.createSync();
     _fileExists = true;
-    print('Zapisuję pierwszy raz: ' + jsonEncode(players));
     _saveFile.writeAsStringSync(jsonEncode(players));
   }
 
@@ -89,13 +76,20 @@ class FileManager {
   }
 
   List<Player> readFile() {
-    List<Player> loadedList = new List();
-    List<dynamic> decoded = jsonDecode(this._saveFile.readAsStringSync());
-    decoded.forEach((element) {
-      loadedList.add(new Player.mapped(
-          element['name'], element['totalDrinks'], element['isWhite']));
-    });
-    return loadedList;
+    if (_fileExists) {
+      List<Player> loadedList = new List();
+      List<dynamic> decoded = jsonDecode(this._saveFile.readAsStringSync());
+      decoded.forEach((element) {
+        loadedList.add(new Player.mapped(
+            element['name'], element['totalDrinks'], element['isWhite']));
+      });
+      return loadedList;
+    }
+    return null;
+  }
+
+  List<Player> get saveContent {
+    return _fileContent;
   }
 
   // void _deleteFile() {
@@ -105,8 +99,4 @@ class FileManager {
   //     }
   //   });
   // }
-
-  List<Player> get saveContent {
-    return _fileContent;
-  }
 }
