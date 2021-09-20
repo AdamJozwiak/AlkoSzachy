@@ -2,7 +2,7 @@
 
 import 'dart:io';
 import 'package:alkochin/models/player.dart';
-import 'package:alkochin/widgets/fileManager.dart';
+import 'package:alkochin/widgets/file_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -29,6 +29,7 @@ class _TeamSelectionState extends State<TeamSelection> {
     this.whitePlayers = List<Player>();
     this.blackPlayers = List<Player>();
     this.saveFile = new FileManager();
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await saveFile.init();
       if (saveFile.saveContent.isNotEmpty) {
@@ -173,9 +174,11 @@ class _TeamSelectionState extends State<TeamSelection> {
   Widget teamSelectionDialog(
       List<Player> initialPlayers, void Function(void Function()) stateSetter) {
     final TextEditingController _textController = new TextEditingController();
+    double _baseDialogHeight = 200.0;
     int _numberOfPlayers = initialPlayers.length;
     double _boxSpacing = 40;
     double _noPlayersLabelSize = 70.0;
+    double _maxHeight = 160.0;
     List<List<bool>> checkBoxState = new List();
     String _occupiedName = '';
     initialPlayers.forEach((player) {
@@ -183,225 +186,239 @@ class _TeamSelectionState extends State<TeamSelection> {
           .add([player.isWhite, !player.isWhite]); // Checkbox: White, Black
     });
 
-    return Column(
-      children: [
-        Container(
-          height: _numberOfPlayers > 0
-              ? _numberOfPlayers * 50.0
-              : _noPlayersLabelSize,
-          width: 300.0,
-          child: ListView.builder(
-              shrinkWrap: true,
-              // ignore: missing_return
-              itemBuilder: (BuildContext context, int index) {
-                Player thisPlayer;
-                if (index < initialPlayers.length) {
-                  thisPlayer = players[index];
-                  return Container(
-                    height: _numberOfPlayers + _boxSpacing,
-                    child: Row(
-                      // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Container(
-                            width: 90.0,
-                            child: RichText(
-                              strutStyle: StrutStyle(fontSize: 25.0),
-                              overflow: TextOverflow.ellipsis,
-                              text: TextSpan(
-                                  text: thisPlayer.name,
-                                  style: TextStyle(
-                                      color: Colors.black,
-                                      fontFamily: 'EnchantedLand',
-                                      fontSize: 25.0)),
+    return SingleChildScrollView(
+      child: Container(
+        height: _baseDialogHeight +
+            (_numberOfPlayers > 1
+                ? (_numberOfPlayers * 20.0)
+                : _numberOfPlayers >= 4
+                    ? _maxHeight
+                    : 0.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              height: _numberOfPlayers > 0
+                  ? (_numberOfPlayers >= 4
+                      ? _maxHeight
+                      : _numberOfPlayers * 44.0)
+                  : _noPlayersLabelSize,
+              width: 300.0,
+              child: ListView.builder(
+                  shrinkWrap: true,
+                  // ignore: missing_return
+                  itemBuilder: (BuildContext context, int index) {
+                    Player thisPlayer;
+                    if (index < initialPlayers.length) {
+                      thisPlayer = players[index];
+                      return Container(
+                        height: _numberOfPlayers + _boxSpacing,
+                        child: Row(
+                          // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Container(
+                                width: 90.0,
+                                child: RichText(
+                                  strutStyle: StrutStyle(fontSize: 25.0),
+                                  overflow: TextOverflow.ellipsis,
+                                  text: TextSpan(
+                                      text: thisPlayer.name,
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontFamily: 'EnchantedLand',
+                                          fontSize: 25.0)),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: 2,
-                        ),
-                        InkResponse(
-                          child: Stack(
-                            children: [
-                              Container(
+                            Spacer(
+                              flex: 2,
+                            ),
+                            InkResponse(
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    width: 20.0,
+                                    height: 20.0,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.rectangle,
+                                      color: Colors.white,
+                                    ),
+                                    child: Opacity(
+                                      opacity:
+                                          checkBoxState[index][0] ? 1.0 : 0.0,
+                                      child: Icon(
+                                        Icons.check_circle_sharp,
+                                        size: 20.0,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              onTap: () {
+                                if (thisPlayer.isWhite) {
+                                  stateSetter(() {
+                                    checkBoxState[index] = [false, false];
+                                  });
+                                } else {
+                                  changeTeam(thisPlayer, true);
+                                  savePlayer(thisPlayer);
+                                  stateSetter(() {
+                                    checkBoxState[index] = [true, false];
+                                  });
+                                  setState(() {});
+                                }
+                              },
+                            ),
+                            Spacer(
+                              flex: 2,
+                            ),
+                            InkResponse(
+                              child: Container(
                                 width: 20.0,
                                 height: 20.0,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.rectangle,
-                                  color: Colors.white,
+                                  color: Colors.black,
                                 ),
                                 child: Opacity(
-                                  opacity: checkBoxState[index][0] ? 1.0 : 0.0,
+                                  opacity: checkBoxState[index][1] ? 1.0 : 0.0,
                                   child: Icon(
                                     Icons.check_circle_sharp,
                                     size: 20.0,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                          onTap: () {
-                            if (thisPlayer.isWhite) {
-                              stateSetter(() {
-                                checkBoxState[index] = [false, false];
-                              });
-                            } else {
-                              changeTeam(thisPlayer, true);
-                              savePlayer(thisPlayer);
-                              stateSetter(() {
-                                checkBoxState[index] = [true, false];
-                              });
-                              setState(() {});
-                            }
-                          },
-                        ),
-                        Spacer(
-                          flex: 2,
-                        ),
-                        InkResponse(
-                          child: Container(
-                            width: 20.0,
-                            height: 20.0,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.rectangle,
-                              color: Colors.black,
-                            ),
-                            child: Opacity(
-                              opacity: checkBoxState[index][1] ? 1.0 : 0.0,
-                              child: Icon(
-                                Icons.check_circle_sharp,
-                                size: 20.0,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          onTap: () {
-                            if (!thisPlayer.isWhite) {
-                              stateSetter(() {
-                                checkBoxState[index] = [false, false];
-                              });
-                            } else {
-                              changeTeam(thisPlayer, false);
-                              savePlayer(thisPlayer);
-                              stateSetter(() {
-                                checkBoxState[index] = [false, true];
-                              });
-                              setState(() {});
-                            }
-                          },
-                        ),
-                        Spacer(
-                          flex: 1,
-                        ),
-                        Container(
-                          width: 60.0,
-                          child: FlatButton.icon(
-                              shape: new RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(100.0),
-                              ),
-                              onPressed: () {
-                                if (thisPlayer.isWhite) {
-                                  whitePlayers.remove(thisPlayer);
+                              onTap: () {
+                                if (!thisPlayer.isWhite) {
+                                  stateSetter(() {
+                                    checkBoxState[index] = [false, false];
+                                  });
                                 } else {
-                                  blackPlayers.remove(thisPlayer);
+                                  changeTeam(thisPlayer, false);
+                                  savePlayer(thisPlayer);
+                                  stateSetter(() {
+                                    checkBoxState[index] = [false, true];
+                                  });
+                                  setState(() {});
                                 }
-                                players.remove(thisPlayer);
-                                saveFile.deleteFromFile(thisPlayer);
-                                stateSetter(() {});
-                                setState(() {});
                               },
-                              icon: Icon(
-                                Icons.delete_forever,
-                                color: Colors.red[700],
+                            ),
+                            Spacer(
+                              flex: 1,
+                            ),
+                            Container(
+                              width: 60.0,
+                              child: FlatButton.icon(
+                                  shape: new RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(100.0),
+                                  ),
+                                  onPressed: () {
+                                    if (thisPlayer.isWhite) {
+                                      whitePlayers.remove(thisPlayer);
+                                    } else {
+                                      blackPlayers.remove(thisPlayer);
+                                    }
+                                    players.remove(thisPlayer);
+                                    saveFile.deleteFromFile(thisPlayer);
+                                    stateSetter(() {});
+                                    setState(() {});
+                                  },
+                                  icon: Icon(
+                                    Icons.delete_forever,
+                                    color: Colors.red[700],
+                                  ),
+                                  label: Text('')),
+                            )
+                          ],
+                        ),
+                      );
+                    } else if (index == 0) {
+                      return Container(
+                        height: _noPlayersLabelSize,
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: 20.0,
+                            ),
+                            Center(
+                              child: Text(
+                                'Brak graczy',
+                                style: TextStyle(fontSize: 40.0),
                               ),
-                              label: Text('')),
-                        )
-                      ],
-                    ),
-                  );
-                } else if (index == 0) {
-                  return Container(
-                    height: _noPlayersLabelSize,
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: 20.0,
+                            ),
+                          ],
                         ),
-                        Center(
-                          child: Text(
-                            'Brak graczy',
-                            style: TextStyle(fontSize: 40.0),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                if (thisPlayer != null) {
-                  players[index] = thisPlayer;
-                }
-              }),
-        ),
-        Container(
-          width: 200.0,
-          child: Form(
-              key: _formKey,
-              child: TextFormField(
-                textAlign: TextAlign.center,
-                controller: _textController,
-                style: TextStyle(fontSize: 30.0),
-                decoration:
-                    InputDecoration(errorStyle: TextStyle(fontSize: 25.0)),
-                onChanged: (value) => _playerName = value,
-                validator: (value) {
-                  if (value == _occupiedName) {
-                    return 'Ta nazwa jest już zajęta!';
+                      );
+                    }
+                    if (thisPlayer != null) {
+                      players[index] = thisPlayer;
+                    }
+                  }),
+            ),
+            Container(
+              width: 200.0,
+              child: Form(
+                  key: _formKey,
+                  child: TextFormField(
+                    textAlign: TextAlign.center,
+                    controller: _textController,
+                    style: TextStyle(fontSize: 30.0),
+                    decoration:
+                        InputDecoration(errorStyle: TextStyle(fontSize: 25.0)),
+                    onChanged: (value) => _playerName = value,
+                    validator: (value) {
+                      if (value == _occupiedName) {
+                        return 'Ta nazwa jest już zajęta!';
+                      }
+                      return (value == null || value.isEmpty)
+                          ? 'Nazwa nie może być pusta'
+                          : null;
+                    },
+                  )),
+            ),
+            SizedBox(height: 5.0),
+            ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    elevation: 10,
+                    primary: Colors.white60,
+                    onPrimary: Colors.amber[900],
+                    animationDuration: Duration(seconds: 1),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(60.0))),
+                onPressed: () {
+                  players.forEach((element) {
+                    if (element.name == _playerName) {
+                      _occupiedName = element.name;
+                    }
+                  });
+                  if (_formKey.currentState.validate()) {
+                    String result = _playerName[0].toUpperCase();
+                    for (int i = 1; i < _playerName.length; i++) {
+                      result += _playerName[i];
+                    }
+                    Player newPlayer = new Player(result);
+                    players.add(newPlayer);
+                    if (players.isNotEmpty && players.last.isWhite) {
+                      whitePlayers.add(players.last);
+                    } else if (players.isNotEmpty && !players.last.isWhite) {
+                      blackPlayers.add(players.last);
+                    }
+                    _textController.clear();
+                    savePlayer(newPlayer);
+                    stateSetter(() {});
                   }
-                  return (value == null || value.isEmpty)
-                      ? 'Nazwa nie może być pusta'
-                      : null;
+                  setState(() {});
                 },
-              )),
+                child: Text(
+                  'Dodaj',
+                  style: TextStyle(fontSize: 30.0, color: Colors.black),
+                )),
+          ],
         ),
-        SizedBox(height: 5.0),
-        ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                elevation: 10,
-                primary: Colors.white60,
-                onPrimary: Colors.amber[900],
-                animationDuration: Duration(seconds: 1),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(60.0))),
-            onPressed: () {
-              players.forEach((element) {
-                if (element.name == _playerName) {
-                  _occupiedName = element.name;
-                }
-              });
-              if (_formKey.currentState.validate()) {
-                String result = _playerName[0].toUpperCase();
-                for (int i = 1; i < _playerName.length; i++) {
-                  result += _playerName[i];
-                }
-                Player newPlayer = new Player(result);
-                players.add(newPlayer);
-                if (players.isNotEmpty && players.last.isWhite) {
-                  whitePlayers.add(players.last);
-                } else if (players.isNotEmpty && !players.last.isWhite) {
-                  blackPlayers.add(players.last);
-                }
-                _textController.clear();
-                savePlayer(newPlayer);
-                stateSetter(() {});
-              }
-              setState(() {});
-            },
-            child: Text(
-              'Dodaj',
-              style: TextStyle(fontSize: 30.0, color: Colors.black),
-            )),
-      ],
+      ),
     );
   }
 
