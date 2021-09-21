@@ -149,7 +149,12 @@ class _TeamSelectionState extends State<TeamSelection> {
                   shape: BoxShape.circle,
                   color: Colors.grey,
                   boxShadow: [BoxShadow(spreadRadius: 1.0, blurRadius: 5)]),
-              child: Icon(Icons.add),
+              child: players.isEmpty
+                  ? Icon(Icons.add)
+                  : Icon(
+                      Icons.theater_comedy,
+                      size: 35,
+                    ),
             ),
             onTap: () async {
               showDialog(
