@@ -11,7 +11,7 @@ class Game extends StatefulWidget {
 class _GameState extends State<Game> {
   @override
   Widget build(BuildContext context) {
-    final double timer = ModalRoute.of(context).settings.arguments;
+    final int timer = ModalRoute.of(context).settings.arguments;
     return Scaffold(
       backgroundColor: Colors.grey[300],
       body: SafeArea(
@@ -22,9 +22,7 @@ class _GameState extends State<Game> {
               height: 10.0,
               thickness: 3.0,
             ),
-            Container(
-              height: 51.0,
-            ),
+            pieceButtons(),
             Divider(
               height: 10.0,
               thickness: 3.0,
@@ -32,6 +30,57 @@ class _GameState extends State<Game> {
             TimerButton(time: timer)
           ],
         ),
+      ),
+    );
+  }
+
+  Widget pieceButtons() {
+    final barHeight = 70.0;
+    final imageSize = 50.0;
+
+    return Container(
+      height: barHeight,
+      width: MediaQuery.of(context).size.width - 15.0,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          IconButton(
+              icon: Image.asset(
+                'pawn.png',
+              ),
+              iconSize: imageSize,
+              onPressed: null),
+          IconButton(
+              icon: Image.asset(
+                'knight.png',
+              ),
+              iconSize: imageSize,
+              onPressed: null),
+          IconButton(
+              icon: Image.asset(
+                'bishop.png',
+              ),
+              iconSize: imageSize,
+              onPressed: null),
+          IconButton(
+              icon: Image.asset(
+                'rook.png',
+              ),
+              iconSize: imageSize,
+              onPressed: null),
+          IconButton(
+              icon: Image.asset(
+                'queen.png',
+              ),
+              iconSize: imageSize,
+              onPressed: null),
+          IconButton(
+              icon: Image.asset(
+                'king.png',
+              ),
+              iconSize: imageSize - 15,
+              onPressed: null),
+        ],
       ),
     );
   }
