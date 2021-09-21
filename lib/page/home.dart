@@ -11,7 +11,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  double timer;
+  int timer;
   final _formKey = GlobalKey<FormState>();
   List<bool> buttonError = new List(3);
   List<Player> players;
@@ -20,7 +20,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     buttonError = [false, false, false];
-    timer = 0.0;
+    timer = 10;
     players = new List();
   }
 
@@ -97,7 +97,7 @@ class _HomePageState extends State<HomePage> {
                     onFieldSubmitted: (value) {
                       if (_formKey.currentState.validate()) {
                         setState(() {
-                          timer = double.parse(value);
+                          timer = int.parse(value);
                           buttonError[0] = false;
                         });
                       }
@@ -131,7 +131,7 @@ class _HomePageState extends State<HomePage> {
               ElevatedButton(
                 onPressed: () async {
                   //Check if timer was set
-                  if (timer != null && timer > 0.5) {
+                  if (timer != null && timer >= 1) {
                     setState(() {
                       buttonError[0] = false;
                     });
