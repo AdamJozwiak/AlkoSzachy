@@ -24,6 +24,7 @@ dependencies:
   flutter:
     sdk: flutter
   path_provider: ^1.6.28
+  stop_watch_timer: ^1.3.1
 
 
   # The following adds the Cupertino Icons font to your application.
