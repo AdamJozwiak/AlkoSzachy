@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:stop_watch_timer/stop_watch_timer.dart';
+import 'package:alkochin/widgets/stop_watch_timer.dart';
 
 class Game extends StatefulWidget {
   const Game({Key key}) : super(key: key);
@@ -10,12 +10,13 @@ class Game extends StatefulWidget {
 }
 
 class _GameState extends State<Game> {
-  List<int> blackTeamShots = new List(2);
-  List<int> whiteTeamShots = new List(2);
+  List<int> blackTeamShots = new List<int>(2);
+  List<int> whiteTeamShots = new List<int>(2);
   List<bool> playerPlaying = [true, false, false];
-  List<double> screenSize = List(2);
+  List<double> screenSize = new List<double>(2);
   bool isWhite;
-  int timeAmount;
+  final StopWatchTimer _whiteTimer = new StopWatchTimer();
+  final StopWatchTimer _blackTimer = new StopWatchTimer();
 
   @override
   void initState() {
@@ -23,20 +24,30 @@ class _GameState extends State<Game> {
     blackTeamShots = [0, 0];
     whiteTeamShots = [0, 0];
     isWhite = true;
-    timeAmount = ModalRoute.of(context).settings.arguments;
+    _whiteTimer.onExecute.add(StopWatchExecute.start);
+    _blackTimer.onExecute.add(StopWatchExecute.stop);
+  }
+
+  @override
+  void dispose() async {
+    super.dispose();
+    await _whiteTimer.dispose();
+    await _blackTimer.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    Duration countdownDuration = Duration(minutes: timeAmount);
     screenSize[0] = MediaQuery.of(context).size.width;
     screenSize[1] = MediaQuery.of(context).size.height * 0.415;
+    _whiteTimer.setPresetMinuteTime(ModalRoute.of(context).settings.arguments);
+    _blackTimer.setPresetMinuteTime(ModalRoute.of(context).settings.arguments);
 
     return Scaffold(
       backgroundColor: Colors.grey[300],
       body: SafeArea(
         child: Column(
           children: [
+            playerButton(!isWhite),
             Divider(
               height: 10.0,
               thickness: 3.0,
@@ -46,22 +57,56 @@ class _GameState extends State<Game> {
               height: 10.0,
               thickness: 3.0,
             ),
+            playerButton(isWhite),
           ],
         ),
       ),
     );
   }
 
-  Widget timerButton(int timeAmount, bool isWhite) {
-    final stopWatch = StopWatchTimer();
+  Widget playerButton(bool isWhite) {
+    return Container(
+        width: screenSize[0],
+        height: screenSize[1],
+        child: RotatedBox(
+          quarterTurns: isWhite ? 0 : 2,
+          child: Expanded(
+            child: TextButton(
+                onPressed: () {
+                  if (isWhite && _whiteTimer.isRunning) {
+                    _whiteTimer.onExecute.add(StopWatchExecute.stop);
+                    _blackTimer.onExecute.add(StopWatchExecute.start);
+                  } else if (!isWhite && _blackTimer.isRunning) {
+                    _whiteTimer.onExecute.add(StopWatchExecute.start);
+                    _blackTimer.onExecute.add(StopWatchExecute.stop);
+                  }
+                },
+                child: StreamBuilder<int>(
+                  stream: isWhite
+                      ? _whiteTimer.rawTime.cast<int>()
+                      : _blackTimer.rawTime.cast<int>(),
+                  initialData: isWhite
+                      ? _whiteTimer.rawTime.value
+                      : _blackTimer.rawTime.value,
+                  builder: (context, snapshot) {
+                    final value = snapshot.data;
+                    final displayTime =
+                        StopWatchTimer.getDisplayTime(value, hours: false);
+                    return Text(
+                      displayTime,
+                      style: TextStyle(fontSize: 60.0, color: Colors.black),
+                    );
+                  },
+                )),
+          ),
+        ));
   }
 
   Widget pieceButtons() {
     final barHeight = 70.0;
-
     return Container(
       height: barHeight,
-      width: MediaQuery.of(context).size.width - 15.0,
+      width: screenSize[0] - 15.0,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
