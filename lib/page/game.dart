@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:alkochin/widgets/stop_watch_timer.dart';
 
@@ -15,6 +14,8 @@ class _GameState extends State<Game> {
   List<bool> playerPlaying = [true, false, false];
   List<double> screenSize = new List<double>(2);
   bool isWhite;
+  bool gameStarted = false;
+  bool firstStart = true;
   final StopWatchTimer _whiteTimer = new StopWatchTimer();
   final StopWatchTimer _blackTimer = new StopWatchTimer();
 
@@ -24,7 +25,7 @@ class _GameState extends State<Game> {
     blackTeamShots = [0, 0];
     whiteTeamShots = [0, 0];
     isWhite = true;
-    _whiteTimer.onExecute.add(StopWatchExecute.start);
+    _whiteTimer.onExecute.add(StopWatchExecute.stop);
     _blackTimer.onExecute.add(StopWatchExecute.stop);
   }
 
@@ -39,29 +40,97 @@ class _GameState extends State<Game> {
   Widget build(BuildContext context) {
     screenSize[0] = MediaQuery.of(context).size.width;
     screenSize[1] = MediaQuery.of(context).size.height * 0.415;
-    _whiteTimer.setPresetMinuteTime(ModalRoute.of(context).settings.arguments);
-    _blackTimer.setPresetMinuteTime(ModalRoute.of(context).settings.arguments);
+    if (!gameStarted) {
+      return mainScreen(0.2);
+    } else {
+      if (firstStart) {
+        _whiteTimer
+            .setPresetMinuteTime(ModalRoute.of(context).settings.arguments);
+        _blackTimer
+            .setPresetMinuteTime(ModalRoute.of(context).settings.arguments);
+        _whiteTimer.onExecute.add(StopWatchExecute.start);
+        setState(() {
+          firstStart = false;
+          playerPlaying = [false, true, false];
+        });
+      }
+      return mainScreen(1.0);
+    }
+  }
 
-    return Scaffold(
-      backgroundColor: Colors.grey[300],
-      body: SafeArea(
-        child: Column(
-          children: [
-            playerButton(!isWhite),
-            Divider(
-              height: 10.0,
-              thickness: 3.0,
-            ),
-            pieceButtons(),
-            Divider(
-              height: 10.0,
-              thickness: 3.0,
-            ),
-            playerButton(isWhite),
-          ],
+  Scaffold mainScreen(double opacity) {
+    if (opacity < 1.0) {
+      return Scaffold(
+          backgroundColor: Colors.grey[300],
+          body: SafeArea(
+              child: Stack(
+            children: [
+              Column(
+                children: [
+                  Opacity(opacity: opacity, child: playerButton(!isWhite)),
+                  Divider(
+                    height: 10.0,
+                    thickness: 3.0,
+                  ),
+                  pieceButtons(),
+                  Divider(
+                    height: 10.0,
+                    thickness: 3.0,
+                  ),
+                  Opacity(opacity: opacity, child: playerButton(isWhite)),
+                ],
+              ),
+              Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Text(
+                      'Gotowi do chlania?',
+                      style: TextStyle(fontSize: 50.0),
+                    ),
+                    Center(
+                      child: Container(
+                        height: 50.0,
+                        width: 100.0,
+                        child: RaisedButton(
+                            elevation: 4.0,
+                            color: Colors.white,
+                            onPressed: () {
+                              setState(() {
+                                gameStarted = true;
+                              });
+                              return;
+                            },
+                            child: Text(
+                              'OK!',
+                              style: TextStyle(fontSize: 30.0),
+                            )),
+                      ),
+                    )
+                  ]),
+            ],
+          )));
+    } else {
+      return Scaffold(
+        backgroundColor: Colors.grey[300],
+        body: SafeArea(
+          child: Column(
+            children: [
+              playerButton(!isWhite),
+              Divider(
+                height: 10.0,
+                thickness: 3.0,
+              ),
+              pieceButtons(),
+              Divider(
+                height: 10.0,
+                thickness: 3.0,
+              ),
+              playerButton(isWhite),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   Widget playerButton(bool isWhite) {
@@ -179,28 +248,31 @@ class _GameState extends State<Game> {
   Widget pieceIcon(String path, int shots, bool isWhite,
       [double imageSize = 50.0]) {
     if (isWhite != null) {
-      return IconButton(
-          icon: Image.asset(path),
-          iconSize: imageSize,
-          onPressed: () {
-            switch (shots) {
-              case 1:
-              case 3:
-              case 5:
-              case 7:
-              case 9:
-                if (isWhite) {
-                  whiteTeamShots[0] = whiteTeamShots[1];
-                  whiteTeamShots[1] += shots;
-                } else {
-                  blackTeamShots[0] = blackTeamShots[1];
-                  blackTeamShots[1] += shots;
-                }
-                break;
-              default:
-                break;
-            }
-          });
+      return Opacity(
+        opacity: 1.0,
+        child: IconButton(
+            icon: Image.asset(path),
+            iconSize: imageSize,
+            onPressed: () {
+              switch (shots) {
+                case 1:
+                case 3:
+                case 5:
+                case 7:
+                case 9:
+                  if (isWhite) {
+                    whiteTeamShots[0] = whiteTeamShots[1];
+                    whiteTeamShots[1] += shots;
+                  } else {
+                    blackTeamShots[0] = blackTeamShots[1];
+                    blackTeamShots[1] += shots;
+                  }
+                  break;
+                default:
+                  break;
+              }
+            }),
+      );
     } else {
       return Opacity(
         opacity: 0.5,
