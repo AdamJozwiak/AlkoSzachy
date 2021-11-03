@@ -1,3 +1,4 @@
+import 'package:alkochin/models/gameStartInfo.dart';
 import 'package:alkochin/models/player.dart';
 import 'package:alkochin/widgets/file_manager.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,8 @@ class _HomePageState extends State<HomePage> {
   final _formKey = GlobalKey<FormState>();
   List<bool> buttonError = new List(3);
   List<Player> players;
+  List<Player> whitePlayers;
+  List<Player> blackPlayers;
 
   @override
   void initState() {
@@ -22,6 +25,8 @@ class _HomePageState extends State<HomePage> {
     buttonError = [false, false, false];
     timer = 10;
     players = new List();
+    whitePlayers = new List();
+    blackPlayers = new List();
   }
 
   @override
@@ -146,24 +151,28 @@ class _HomePageState extends State<HomePage> {
                   FileManager fileManager = new FileManager();
                   await fileManager.init();
                   this.players = fileManager.readFile();
+                  this.whitePlayers.clear();
+                  this.blackPlayers.clear();
+                  if (this.players.isNotEmpty) {
+                    this.players.forEach((player) {
+                      if (player.isWhite) {
+                        this.whitePlayers.add(player);
+                      } else {
+                        this.blackPlayers.add(player);
+                      }
+                    });
+                  }
                   if (this.players.isEmpty) {
                     setState(() {
                       buttonError[1] = true;
                     });
                     return;
                   } else if (this.players.length >= 2) {
-                    List<bool> differentTeam = new List(2);
-                    differentTeam = [false, false];
-
-                    //Check whether there is at least one player in each team
-                    this.players.forEach((element) {
-                      if (element.isWhite) {
-                        differentTeam[0] = true;
-                      } else {
-                        differentTeam[1] = true;
-                      }
+                    setState(() {
+                      buttonError[1] = false;
                     });
-                    if (differentTeam[0] == true && differentTeam[1] == true) {
+                    if (this.whitePlayers.length > 0 &&
+                        this.blackPlayers.length > 0) {
                       setState(() {
                         buttonError[2] = false;
                       });
@@ -185,7 +194,8 @@ class _HomePageState extends State<HomePage> {
                   if (buttonError[0] == false &&
                       buttonError[1] == false &&
                       buttonError[2] == false) {
-                    Navigator.pushNamed(context, '/game', arguments: timer);
+                    Navigator.pushNamed(context, '/game',
+                        arguments: GameInfo(timer, whitePlayers, blackPlayers));
                   }
                 },
                 child: Text('Graj!',
