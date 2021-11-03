@@ -1,3 +1,5 @@
+import 'package:alkochin/models/gameStartInfo.dart';
+import 'package:alkochin/models/player.dart';
 import 'package:flutter/material.dart';
 import 'package:alkochin/widgets/stop_watch_timer.dart';
 
@@ -9,9 +11,10 @@ class Game extends StatefulWidget {
 }
 
 class _GameState extends State<Game> {
+  List<Player> blackTeam = new List<Player>();
+  List<Player> whiteTeam = new List<Player>();
   List<int> blackTeamShots = new List<int>(2);
   List<int> whiteTeamShots = new List<int>(2);
-  List<bool> playerPlaying = [true, false, false];
   List<double> screenSize = new List<double>(2);
   bool isWhite;
   bool gameStarted = false;
@@ -44,14 +47,16 @@ class _GameState extends State<Game> {
       return mainScreen(0.2);
     } else {
       if (firstStart) {
-        _whiteTimer
-            .setPresetMinuteTime(ModalRoute.of(context).settings.arguments);
-        _blackTimer
-            .setPresetMinuteTime(ModalRoute.of(context).settings.arguments);
+        GameInfo gameInfo = ModalRoute.of(context).settings.arguments;
+        _whiteTimer.setPresetMinuteTime(gameInfo.timer);
+        _blackTimer.setPresetMinuteTime(gameInfo.timer);
+        whiteTeam = gameInfo.whitePlayers;
+        blackTeam = gameInfo.blackPlayers;
+        gameInfo = null;
+
         _whiteTimer.onExecute.add(StopWatchExecute.start);
         setState(() {
           firstStart = false;
-          playerPlaying = [false, true, false];
         });
       }
       return mainScreen(1.0);
@@ -67,7 +72,7 @@ class _GameState extends State<Game> {
             children: [
               Column(
                 children: [
-                  Opacity(opacity: opacity, child: playerButton(!isWhite)),
+                  Opacity(opacity: opacity, child: playerButton(false)),
                   Divider(
                     height: 10.0,
                     thickness: 3.0,
@@ -77,7 +82,7 @@ class _GameState extends State<Game> {
                     height: 10.0,
                     thickness: 3.0,
                   ),
-                  Opacity(opacity: opacity, child: playerButton(isWhite)),
+                  Opacity(opacity: opacity, child: playerButton(true)),
                 ],
               ),
               Column(
@@ -115,7 +120,7 @@ class _GameState extends State<Game> {
         body: SafeArea(
           child: Column(
             children: [
-              playerButton(!isWhite),
+              playerButton(false),
               Divider(
                 height: 10.0,
                 thickness: 3.0,
@@ -125,7 +130,7 @@ class _GameState extends State<Game> {
                 height: 10.0,
                 thickness: 3.0,
               ),
-              playerButton(isWhite),
+              playerButton(true),
             ],
           ),
         ),
@@ -133,41 +138,45 @@ class _GameState extends State<Game> {
     }
   }
 
-  Widget playerButton(bool isWhite) {
+  Widget playerButton(bool whitePlayer) {
     return Container(
         width: screenSize[0],
         height: screenSize[1],
         child: RotatedBox(
-          quarterTurns: isWhite ? 0 : 2,
-          child: Expanded(
-            child: TextButton(
-                onPressed: () {
-                  if (isWhite && _whiteTimer.isRunning) {
-                    _whiteTimer.onExecute.add(StopWatchExecute.stop);
-                    _blackTimer.onExecute.add(StopWatchExecute.start);
-                  } else if (!isWhite && _blackTimer.isRunning) {
-                    _whiteTimer.onExecute.add(StopWatchExecute.start);
-                    _blackTimer.onExecute.add(StopWatchExecute.stop);
-                  }
+          quarterTurns: whitePlayer ? 0 : 2,
+          child: TextButton(
+              onPressed: () {
+                if (isWhite && _whiteTimer.isRunning) {
+                  _whiteTimer.onExecute.add(StopWatchExecute.stop);
+                  _blackTimer.onExecute.add(StopWatchExecute.start);
+                  setState(() {
+                    isWhite = false;
+                  });
+                } else if (!isWhite && _blackTimer.isRunning) {
+                  _whiteTimer.onExecute.add(StopWatchExecute.start);
+                  _blackTimer.onExecute.add(StopWatchExecute.stop);
+                  setState(() {
+                    isWhite = true;
+                  });
+                }
+              },
+              child: StreamBuilder<int>(
+                stream: whitePlayer
+                    ? _whiteTimer.rawTime.cast<int>()
+                    : _blackTimer.rawTime.cast<int>(),
+                initialData: whitePlayer
+                    ? _whiteTimer.rawTime.value
+                    : _blackTimer.rawTime.value,
+                builder: (context, snapshot) {
+                  final value = snapshot.data;
+                  final displayTime =
+                      StopWatchTimer.getDisplayTime(value, hours: false);
+                  return Text(
+                    displayTime,
+                    style: TextStyle(fontSize: 60.0, color: Colors.black),
+                  );
                 },
-                child: StreamBuilder<int>(
-                  stream: isWhite
-                      ? _whiteTimer.rawTime.cast<int>()
-                      : _blackTimer.rawTime.cast<int>(),
-                  initialData: isWhite
-                      ? _whiteTimer.rawTime.value
-                      : _blackTimer.rawTime.value,
-                  builder: (context, snapshot) {
-                    final value = snapshot.data;
-                    final displayTime =
-                        StopWatchTimer.getDisplayTime(value, hours: false);
-                    return Text(
-                      displayTime,
-                      style: TextStyle(fontSize: 60.0, color: Colors.black),
-                    );
-                  },
-                )),
-          ),
+              )),
         ));
   }
 
@@ -179,81 +188,30 @@ class _GameState extends State<Game> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          pieceIcon(
-              'pawn.png',
-              1,
-              playerPlaying[0] == true
-                  ? null
-                  : playerPlaying[1] == true
-                      ? true
-                      : playerPlaying[2] == true
-                          ? false
-                          : null),
-          pieceIcon(
-              'knight.png',
-              3,
-              playerPlaying[0] == true
-                  ? null
-                  : playerPlaying[1] == true
-                      ? true
-                      : playerPlaying[2] == true
-                          ? false
-                          : null),
-          pieceIcon(
-              'bishop.png',
-              3,
-              playerPlaying[0] == true
-                  ? null
-                  : playerPlaying[1] == true
-                      ? true
-                      : playerPlaying[2] == true
-                          ? false
-                          : null),
-          pieceIcon(
-              'rook.png',
-              5,
-              playerPlaying[0] == true
-                  ? null
-                  : playerPlaying[1] == true
-                      ? true
-                      : playerPlaying[2] == true
-                          ? false
-                          : null),
-          pieceIcon(
-              'queen.png',
-              9,
-              playerPlaying[0] == true
-                  ? null
-                  : playerPlaying[1] == true
-                      ? true
-                      : playerPlaying[2] == true
-                          ? false
-                          : null),
-          pieceIcon(
-              'king.png',
-              7,
-              playerPlaying[0] == true
-                  ? null
-                  : playerPlaying[1] == true
-                      ? true
-                      : playerPlaying[2] == true
-                          ? false
-                          : null,
-              30.0),
+          pieceIcon('pawn.png', 1),
+          pieceIcon('knight.png', 3),
+          pieceIcon('bishop.png', 3),
+          pieceIcon('rook.png', 5),
+          pieceIcon('queen.png', 9),
+          pieceIcon('king.png', 7, 30.0),
         ],
       ),
     );
   }
 
-  Widget pieceIcon(String path, int shots, bool isWhite,
-      [double imageSize = 50.0]) {
-    if (isWhite != null) {
+  Widget pieceIcon(String path, int shots, [double imageSize = 50.0]) {
+    if (gameStarted) {
       return Opacity(
         opacity: 1.0,
-        child: IconButton(
-            icon: Image.asset(path),
-            iconSize: imageSize,
-            onPressed: () {
+        child: InkResponse(
+            child: Image.asset(
+              path,
+              width: imageSize,
+              height: imageSize,
+            ),
+            radius: imageSize / 3,
+            enableFeedback: true,
+            onTap: () {
               switch (shots) {
                 case 1:
                 case 3:
@@ -275,13 +233,15 @@ class _GameState extends State<Game> {
       );
     } else {
       return Opacity(
-        opacity: 0.5,
-        child: IconButton(
-          icon: Image.asset(path),
-          iconSize: imageSize,
-          onPressed: null,
-        ),
-      );
+          opacity: 0.5,
+          child: InkResponse(
+              child: Image.asset(
+                path,
+                width: imageSize,
+                height: imageSize,
+              ),
+              radius: imageSize / 3,
+              onTap: null));
     }
   }
 }
