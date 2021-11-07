@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:alkochin/models/gameStartInfo.dart';
 import 'package:alkochin/models/player.dart';
 import 'package:flutter/material.dart';
@@ -28,8 +30,7 @@ class _GameState extends State<Game> {
     blackTeamShots = [0, 0];
     whiteTeamShots = [0, 0];
     isWhite = true;
-    _whiteTimer.onExecute.add(StopWatchExecute.stop);
-    _blackTimer.onExecute.add(StopWatchExecute.stop);
+    pauseGame();
   }
 
   @override
@@ -62,6 +63,8 @@ class _GameState extends State<Game> {
       return mainScreen(1.0);
     }
   }
+
+  // ----------------------------- WIDGETY ---------------------------------- //
 
   Scaffold mainScreen(double opacity) {
     if (opacity < 1.0) {
@@ -145,21 +148,7 @@ class _GameState extends State<Game> {
         child: RotatedBox(
           quarterTurns: whitePlayer ? 0 : 2,
           child: TextButton(
-              onPressed: () {
-                if (isWhite && _whiteTimer.isRunning) {
-                  _whiteTimer.onExecute.add(StopWatchExecute.stop);
-                  _blackTimer.onExecute.add(StopWatchExecute.start);
-                  setState(() {
-                    isWhite = false;
-                  });
-                } else if (!isWhite && _blackTimer.isRunning) {
-                  _whiteTimer.onExecute.add(StopWatchExecute.start);
-                  _blackTimer.onExecute.add(StopWatchExecute.stop);
-                  setState(() {
-                    isWhite = true;
-                  });
-                }
-              },
+              onPressed: () => switchPlayer(),
               child: StreamBuilder<int>(
                 stream: whitePlayer
                     ? _whiteTimer.rawTime.cast<int>()
@@ -211,7 +200,7 @@ class _GameState extends State<Game> {
             ),
             radius: imageSize / 3,
             enableFeedback: true,
-            onTap: () {
+            onTap: () async {
               switch (shots) {
                 case 1:
                 case 3:
@@ -225,6 +214,44 @@ class _GameState extends State<Game> {
                     blackTeamShots[0] = blackTeamShots[1];
                     blackTeamShots[1] += shots;
                   }
+                  List<Player> selectedPlayers =
+                      selectRandomPlayers(!isWhite, shots);
+                  pauseGame();
+                  await showDialog(
+                      barrierDismissible: true,
+                      context: context,
+                      builder: (BuildContext context) {
+                        String drinkingPlayers = '';
+                        selectedPlayers.forEach((element) {
+                          drinkingPlayers += element.name +
+                              ' pije: ' +
+                              element.currentDrinks.toString();
+                          element.currentDrinks = 0;
+                          drinkingPlayers += '\n';
+                        });
+                        return Container(
+                          width: 200.0,
+                          height: 100.0,
+                          child: AlertDialog(
+                            title: !isWhite
+                                ? Center(child: Text('Biali piją!'))
+                                : Center(child: Text('Czarni piją!')),
+                            content: !isWhite
+                                ? Center(
+                                    child: Text('Biali: ' +
+                                        whiteTeamShots[1].toString() +
+                                        ' kieliszków\n Teraz: \n' +
+                                        drinkingPlayers),
+                                  )
+                                : Center(
+                                    child: Text('Czarni: ' +
+                                        whiteTeamShots[1].toString() +
+                                        ' kieliszków\n Teraz: \n' +
+                                        drinkingPlayers)),
+                          ),
+                        );
+                      });
+                  switchPlayer();
                   break;
                 default:
                   break;
@@ -243,5 +270,75 @@ class _GameState extends State<Game> {
               radius: imageSize / 3,
               onTap: null));
     }
+  }
+
+  // ----------------------------- Funkcje ---------------------------------- //
+
+  void pauseGame() {
+    _whiteTimer.onExecute.add(StopWatchExecute.stop);
+    _blackTimer.onExecute.add(StopWatchExecute.stop);
+  }
+
+  void switchPlayer() {
+    if (isWhite) {
+      _whiteTimer.onExecute.add(StopWatchExecute.stop);
+      _blackTimer.onExecute.add(StopWatchExecute.start);
+      setState(() {
+        isWhite = false;
+      });
+    } else if (!isWhite) {
+      _whiteTimer.onExecute.add(StopWatchExecute.start);
+      _blackTimer.onExecute.add(StopWatchExecute.stop);
+      setState(() {
+        isWhite = true;
+      });
+    }
+  }
+
+  List<Player> selectRandomPlayers(bool isWhite, int shots) {
+    final _random = new Random();
+    List<Player> selectedPlayers = new List();
+
+    whiteTeam.forEach((element) {
+      element.currentDrinks = 0;
+    });
+    blackTeam.forEach((element) {
+      element.currentDrinks = 0;
+    });
+
+    if (isWhite) {
+      for (int i = 0; i < shots; i++) {
+        Player selectedPlayer = whiteTeam[_random.nextInt(whiteTeam.length)];
+        selectedPlayer.currentDrinks += 1;
+        selectedPlayer.totalDrinks += 1;
+        if (selectedPlayer.currentDrinks <= 1)
+          selectedPlayers.add(selectedPlayer);
+      }
+    } else {
+      for (int i = 0; i < shots; i++) {
+        Player selectedPlayer = blackTeam[_random.nextInt(blackTeam.length)];
+        selectedPlayer.currentDrinks += 1;
+        selectedPlayer.totalDrinks += 1;
+        if (selectedPlayer.currentDrinks <= 1)
+          selectedPlayers.add(selectedPlayer);
+      }
+    }
+    whiteTeam.forEach((element) {
+      print(element.name + ', wypił: ' + element.totalDrinks.toString());
+    });
+    print('\n');
+    blackTeam.forEach((element) {
+      print(element.name + ', wypił: ' + element.totalDrinks.toString());
+    });
+    print('\n');
+    print('\n');
+    whiteTeam.forEach((element) {
+      print(element.name + ', wypił: ' + element.totalDrinks.toString());
+    });
+    print('\n');
+    blackTeam.forEach((element) {
+      print(element.name + ', wypił: ' + element.totalDrinks.toString());
+    });
+    return selectedPlayers;
   }
 }

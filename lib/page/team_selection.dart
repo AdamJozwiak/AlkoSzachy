@@ -91,7 +91,7 @@ class _TeamSelectionState extends State<TeamSelection> {
                               return Container(
                                 child: Center(
                                     child: Text(
-                                  '${whitePlayers[index].name}',
+                                  '${whitePlayers[index].name} - ${whitePlayers[index].totalDrinks}',
                                   style: TextStyle(fontSize: _playerNameSize),
                                 )),
                               );
@@ -123,7 +123,8 @@ class _TeamSelectionState extends State<TeamSelection> {
                             itemBuilder: (BuildContext context, int index) {
                               return Container(
                                 child: Center(
-                                    child: Text('${blackPlayers[index].name}',
+                                    child: Text(
+                                        '${blackPlayers[index].name} - ${blackPlayers[index].totalDrinks} ',
                                         style: TextStyle(
                                             fontSize: _playerNameSize))),
                               );
@@ -179,7 +180,7 @@ class _TeamSelectionState extends State<TeamSelection> {
   Widget teamSelectionDialog(
       List<Player> initialPlayers, void Function(void Function()) stateSetter) {
     final TextEditingController _textController = new TextEditingController();
-    double _baseDialogHeight = 200.0;
+    double _baseDialogHeight = 230.0;
     int _numberOfPlayers = initialPlayers.length;
     double _boxSpacing = 40;
     double _noPlayersLabelSize = 70.0;
