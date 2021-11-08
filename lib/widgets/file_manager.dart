@@ -16,42 +16,79 @@ class FileManager {
     _fileExists = false;
   }
 
-  void init() async {
+  Future<void> init() async {
     this._directory = await getApplicationDocumentsDirectory();
-    this._saveFile = new File(this._directory.path + "/" + this._fileName);
-    this._fileExists = this._saveFile.existsSync();
+    this._saveFile = File(this._directory.path + "/" + this._fileName);
+    checkFile();
     if (_fileExists) {
       this._fileContent = readFile();
     }
   }
 
-  void writeToFile(List<Player> players) {
+  void checkFile() {
+    this._fileExists = this._saveFile.existsSync();
+  }
+
+  void writeToFile(List<Player> players, [bool force = false]) {
     if (_fileExists) {
       List<Player> jsonFileContent = readFile();
-      int playerIterator = 0;
-      int biggerListLength = max(players.length, jsonFileContent.length);
-      while (playerIterator < biggerListLength) {
-        bool playerNotFound = true;
-        if (jsonFileContent.isNotEmpty &&
-            playerIterator < jsonFileContent.length) {
-          players.forEach((element) {
-            if (element.name == jsonFileContent[playerIterator].name) {
-              if (jsonFileContent[playerIterator].totalDrinks <
-                  element.totalDrinks) {
-                jsonFileContent[playerIterator].totalDrinks =
-                    element.totalDrinks;
+      if (players.length > jsonFileContent.length) {
+        //If adding new player
+        int playerIterator = 0;
+        Map<Player, int> foundPlayersIterators = new Map<Player, int>();
+        while (playerIterator < players.length) {
+          for (int i = 0; i < jsonFileContent.length; i++) {
+            if (jsonFileContent[i].name == players[playerIterator].name) {
+              if (players[playerIterator].totalDrinks >
+                  jsonFileContent[i].totalDrinks) {
+                jsonFileContent[i].totalDrinks =
+                    players[playerIterator].totalDrinks;
               }
-              if (jsonFileContent[playerIterator].isWhite != element.isWhite) {
-                jsonFileContent[playerIterator].isWhite = element.isWhite;
+              if (players[playerIterator].isWhite !=
+                  jsonFileContent[i].isWhite) {
+                jsonFileContent[i].isWhite = players[playerIterator].isWhite;
               }
-              playerNotFound = false;
+              foundPlayersIterators.addAll(
+                  <Player, int>{players[playerIterator]: playerIterator});
+            }
+          }
+          playerIterator++;
+        }
+        for (int i = 0; i < players.length; i++) {
+          bool playerFound = false;
+          foundPlayersIterators.forEach((key, value) {
+            if (i == value) {
+              playerFound = true;
             }
           });
+          if (!playerFound) {
+            jsonFileContent.add(players[i]);
+          }
         }
-        if (playerNotFound) {
-          jsonFileContent.add(players[playerIterator]);
+      } else {
+        //If modifying existing player
+        int savedPlayerIterator = 0;
+        while (savedPlayerIterator < jsonFileContent.length) {
+          for (int i = 0; i < players.length; i++) {
+            if (players[i].name == jsonFileContent[savedPlayerIterator].name) {
+              if (force) {
+                jsonFileContent[savedPlayerIterator] = players[i];
+              } else {
+                if (jsonFileContent[savedPlayerIterator].totalDrinks <
+                    players[i].totalDrinks) {
+                  jsonFileContent[savedPlayerIterator].totalDrinks =
+                      players[i].totalDrinks;
+                }
+                if (jsonFileContent[savedPlayerIterator].isWhite !=
+                    players[i].isWhite) {
+                  jsonFileContent[savedPlayerIterator].isWhite =
+                      players[i].isWhite;
+                }
+              }
+            }
+          }
+          savedPlayerIterator++;
         }
-        playerIterator++;
       }
       _saveFile.writeAsStringSync(jsonEncode(jsonFileContent));
     } else {
@@ -92,11 +129,20 @@ class FileManager {
     return _fileContent;
   }
 
-  // void _deleteFile() {
-  //   getApplicationDocumentsDirectory().then((Directory directory) {
-  //     if (_fileExists) {
-  //       _saveFile.deleteSync();
-  //     }
-  //   });
-  // }
+  void deleteUserScores() {
+    List<Player> players = readFile();
+    players.forEach((element) {
+      element.totalDrinks = 0;
+    });
+    writeToFile(players, true);
+  }
+
+  void deleteFile() {
+    getApplicationDocumentsDirectory().then((Directory directory) {
+      checkFile();
+      if (_fileExists) {
+        _saveFile.deleteSync();
+      }
+    });
+  }
 }

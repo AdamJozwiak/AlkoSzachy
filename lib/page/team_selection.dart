@@ -20,20 +20,20 @@ class _TeamSelectionState extends State<TeamSelection> {
   String _playerName = '';
   final _formKey = GlobalKey<FormState>();
   final _playerNameSize = 30.0;
-  FileManager saveFile;
-  bool saveFileInitialized = false;
+  FileManager fileManager;
+  bool fileManagerInitialized = false;
 
   @override
   void initState() {
     this.players = List<Player>();
     this.whitePlayers = List<Player>();
     this.blackPlayers = List<Player>();
-    this.saveFile = new FileManager();
+    this.fileManager = new FileManager();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await saveFile.init();
-      if (saveFile.saveContent.isNotEmpty) {
-        players = saveFile.saveContent;
+      await fileManager.init();
+      if (fileManager.saveContent.isNotEmpty) {
+        players = fileManager.saveContent;
         players.forEach((player) {
           if (player.isWhite) {
             whitePlayers.add(player);
@@ -44,8 +44,16 @@ class _TeamSelectionState extends State<TeamSelection> {
         setState(() {});
       } else
         print('Brak zawartości');
+      // fileManager.deleteFile();
+      // fileManager.deleteUserScores();
     });
     super.initState();
+  }
+
+  @override
+  Future<void> dispose() async {
+    this.fileManager = null;
+    super.dispose();
   }
 
   @override
@@ -328,7 +336,7 @@ class _TeamSelectionState extends State<TeamSelection> {
                                       blackPlayers.remove(thisPlayer);
                                     }
                                     players.remove(thisPlayer);
-                                    saveFile.deleteFromFile(thisPlayer);
+                                    fileManager.deleteFromFile(thisPlayer);
                                     stateSetter(() {});
                                     setState(() {});
                                   },
@@ -432,14 +440,19 @@ class _TeamSelectionState extends State<TeamSelection> {
     bool playerNotFound = true;
     players.forEach((element) {
       if (element.name == player.name) {
-        element = player;
+        if (element.totalDrinks < player.totalDrinks) {
+          element.totalDrinks = player.totalDrinks;
+        }
+        if (element.isWhite != player.isWhite) {
+          element.isWhite = player.isWhite;
+        }
         playerNotFound = false;
       }
     });
     if (playerNotFound) {
       players.add(player);
     }
-    saveFile.writeToFile(players);
+    fileManager.writeToFile(players);
   }
 
   void changeTeam(Player player, bool white) {
