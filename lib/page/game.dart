@@ -1,7 +1,7 @@
 import 'dart:math';
-
 import 'package:alkochin/models/gameStartInfo.dart';
 import 'package:alkochin/models/player.dart';
+import 'package:alkochin/widgets/file_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:alkochin/widgets/stop_watch_timer.dart';
 
@@ -23,6 +23,7 @@ class _GameState extends State<Game> {
   bool firstStart = true;
   final StopWatchTimer _whiteTimer = new StopWatchTimer();
   final StopWatchTimer _blackTimer = new StopWatchTimer();
+  FileManager fileManager = new FileManager();
 
   @override
   void initState() {
@@ -30,15 +31,21 @@ class _GameState extends State<Game> {
     blackTeamShots = [0, 0];
     whiteTeamShots = [0, 0];
     isWhite = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await fileManager.init();
+    });
     pauseGame();
   }
 
   @override
   void dispose() async {
+    fileManager = null;
     super.dispose();
     await _whiteTimer.dispose();
     await _blackTimer.dispose();
   }
+
+  // TODO: Naprawic losowanie graczy i ilosc picia i jaka druzyna pije
 
   @override
   Widget build(BuildContext context) {
@@ -251,6 +258,7 @@ class _GameState extends State<Game> {
                           ),
                         );
                       });
+                  fileManager.writeToFile(selectedPlayers);
                   switchPlayer();
                   break;
                 default:
@@ -296,8 +304,8 @@ class _GameState extends State<Game> {
   }
 
   List<Player> selectRandomPlayers(bool isWhite, int shots) {
-    final _random = new Random();
     List<Player> selectedPlayers = new List();
+    Random _random;
 
     whiteTeam.forEach((element) {
       element.currentDrinks = 0;
@@ -308,6 +316,7 @@ class _GameState extends State<Game> {
 
     if (isWhite) {
       for (int i = 0; i < shots; i++) {
+        _random = new Random();
         Player selectedPlayer = whiteTeam[_random.nextInt(whiteTeam.length)];
         selectedPlayer.currentDrinks += 1;
         selectedPlayer.totalDrinks += 1;
@@ -316,6 +325,7 @@ class _GameState extends State<Game> {
       }
     } else {
       for (int i = 0; i < shots; i++) {
+        _random = new Random();
         Player selectedPlayer = blackTeam[_random.nextInt(blackTeam.length)];
         selectedPlayer.currentDrinks += 1;
         selectedPlayer.totalDrinks += 1;
@@ -323,22 +333,6 @@ class _GameState extends State<Game> {
           selectedPlayers.add(selectedPlayer);
       }
     }
-    whiteTeam.forEach((element) {
-      print(element.name + ', wypił: ' + element.totalDrinks.toString());
-    });
-    print('\n');
-    blackTeam.forEach((element) {
-      print(element.name + ', wypił: ' + element.totalDrinks.toString());
-    });
-    print('\n');
-    print('\n');
-    whiteTeam.forEach((element) {
-      print(element.name + ', wypił: ' + element.totalDrinks.toString());
-    });
-    print('\n');
-    blackTeam.forEach((element) {
-      print(element.name + ', wypił: ' + element.totalDrinks.toString());
-    });
     return selectedPlayers;
   }
 }
