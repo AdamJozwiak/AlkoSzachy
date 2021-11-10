@@ -22,6 +22,7 @@ class _TeamSelectionState extends State<TeamSelection> {
   final _playerNameSize = 30.0;
   FileManager fileManager;
   bool fileManagerInitialized = false;
+  List<double> _screenSize;
 
   @override
   void initState() {
@@ -29,6 +30,7 @@ class _TeamSelectionState extends State<TeamSelection> {
     this.whitePlayers = List<Player>();
     this.blackPlayers = List<Player>();
     this.fileManager = new FileManager();
+    this._screenSize = [0.0, 0.0];
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await fileManager.init();
@@ -58,6 +60,10 @@ class _TeamSelectionState extends State<TeamSelection> {
 
   @override
   Widget build(BuildContext context) {
+    _screenSize = [
+      MediaQuery.of(context).size.width,
+      MediaQuery.of(context).size.height
+    ];
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -146,39 +152,70 @@ class _TeamSelectionState extends State<TeamSelection> {
           ],
         ),
         SizedBox(
-          height: 25.0,
+          height: 10.0,
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 180.0),
-          child: InkResponse(
-            child: Container(
-              width: 20.0,
-              height: 50.0,
-              decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey,
-                  boxShadow: [BoxShadow(spreadRadius: 1.0, blurRadius: 5)]),
-              child: players.isEmpty
-                  ? Icon(Icons.add)
-                  : Icon(
-                      Icons.theater_comedy,
-                      size: 35,
-                    ),
-            ),
-            onTap: () async {
-              showDialog(
-                  context: context,
-                  builder: (context) {
-                    return StatefulBuilder(
-                      builder: (context, stateSetter) {
-                        return AlertDialog(
-                          backgroundColor: Colors.white70,
-                          content: teamSelectionDialog(players, stateSetter),
+        Container(
+          height: 80.0,
+          width: _screenSize[0],
+          child: Row(
+            children: [
+              Spacer(
+                flex: 3,
+              ),
+              InkResponse(
+                child: Container(
+                  width: 55.0,
+                  height: 80.0,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey,
+                      boxShadow: [BoxShadow(spreadRadius: 1.0, blurRadius: 5)]),
+                  child: players.isEmpty
+                      ? Icon(Icons.add)
+                      : Icon(
+                          Icons.theater_comedy,
+                          size: 35,
+                        ),
+                ),
+                onTap: () async {
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return StatefulBuilder(
+                          builder: (context, stateSetter) {
+                            return AlertDialog(
+                              backgroundColor: Colors.white70,
+                              content:
+                                  teamSelectionDialog(players, stateSetter),
+                            );
+                          },
                         );
-                      },
-                    );
-                  });
-            },
+                      });
+                },
+              ),
+              Spacer(
+                flex: 2,
+              ),
+              Container(
+                width: 60.0,
+                child: FlatButton.icon(
+                    shape: new RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100.0),
+                    ),
+                    onPressed: () {
+                      players.forEach((element) {
+                        element.totalDrinks = 0;
+                      });
+                      fileManager.writeToFile(players, true);
+                      setState(() {});
+                    },
+                    icon: Icon(
+                      Icons.delete_forever,
+                      color: Colors.red[700],
+                    ),
+                    label: Text('')),
+              )
+            ],
           ),
         ),
       ]),
@@ -188,11 +225,11 @@ class _TeamSelectionState extends State<TeamSelection> {
   Widget teamSelectionDialog(
       List<Player> initialPlayers, void Function(void Function()) stateSetter) {
     final TextEditingController _textController = new TextEditingController();
-    double _baseDialogHeight = 230.0;
+    double _baseDialogHeight = 150.0;
     int _numberOfPlayers = initialPlayers.length;
     double _boxSpacing = 40;
     double _noPlayersLabelSize = 70.0;
-    double _maxHeight = 160.0;
+    double _maxHeight = 200.0;
     List<List<bool>> checkBoxState = new List();
     String _occupiedName = '';
     initialPlayers.forEach((player) {
@@ -203,19 +240,17 @@ class _TeamSelectionState extends State<TeamSelection> {
     return SingleChildScrollView(
       child: Container(
         height: _baseDialogHeight +
-            (_numberOfPlayers > 1
-                ? (_numberOfPlayers * 20.0)
-                : _numberOfPlayers >= 4
-                    ? _maxHeight
-                    : 0.0),
+            (_numberOfPlayers < 3 ? (_numberOfPlayers * 20.0) : _maxHeight),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
+              decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white60, width: 2.0)),
               height: _numberOfPlayers > 0
-                  ? (_numberOfPlayers >= 4
+                  ? (_numberOfPlayers >= 5
                       ? _maxHeight
-                      : _numberOfPlayers * 44.0)
+                      : _numberOfPlayers * 50.0)
                   : _noPlayersLabelSize,
               width: 300.0,
               child: ListView.builder(
@@ -372,8 +407,12 @@ class _TeamSelectionState extends State<TeamSelection> {
                     }
                   }),
             ),
+            SizedBox(
+              height: 35.0,
+            ),
             Container(
               width: 200.0,
+              height: 40.0,
               child: Form(
                   key: _formKey,
                   child: TextFormField(
@@ -382,6 +421,31 @@ class _TeamSelectionState extends State<TeamSelection> {
                     style: TextStyle(fontSize: 30.0),
                     decoration:
                         InputDecoration(errorStyle: TextStyle(fontSize: 25.0)),
+                    onFieldSubmitted: (value) {
+                      players.forEach((element) {
+                        if (element.name == _playerName) {
+                          _occupiedName = element.name;
+                        }
+                      });
+                      if (_formKey.currentState.validate()) {
+                        String result = _playerName[0].toUpperCase();
+                        for (int i = 1; i < _playerName.length; i++) {
+                          result += _playerName[i];
+                        }
+                        Player newPlayer = new Player(result);
+                        players.add(newPlayer);
+                        if (players.isNotEmpty && players.last.isWhite) {
+                          whitePlayers.add(players.last);
+                        } else if (players.isNotEmpty &&
+                            !players.last.isWhite) {
+                          blackPlayers.add(players.last);
+                        }
+                        _textController.clear();
+                        savePlayer(newPlayer);
+                        stateSetter(() {});
+                      }
+                      setState(() {});
+                    },
                     onChanged: (value) => _playerName = value,
                     validator: (value) {
                       if (value == _occupiedName) {
@@ -393,7 +457,7 @@ class _TeamSelectionState extends State<TeamSelection> {
                     },
                   )),
             ),
-            SizedBox(height: 5.0),
+            SizedBox(height: 2.0),
             ElevatedButton(
                 style: ElevatedButton.styleFrom(
                     elevation: 10,
