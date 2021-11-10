@@ -21,6 +21,7 @@ class _GameState extends State<Game> {
   bool isWhite;
   bool gameStarted = false;
   bool firstStart = true;
+  List<bool> whoWon;
   final StopWatchTimer _whiteTimer = new StopWatchTimer();
   final StopWatchTimer _blackTimer = new StopWatchTimer();
   FileManager fileManager = new FileManager();
@@ -30,6 +31,7 @@ class _GameState extends State<Game> {
     super.initState();
     blackTeamShots = [0, 0];
     whiteTeamShots = [0, 0];
+    whoWon = [false, false];
     isWhite = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await fileManager.init();
@@ -44,8 +46,6 @@ class _GameState extends State<Game> {
     await _whiteTimer.dispose();
     await _blackTimer.dispose();
   }
-
-  // TODO: Naprawic losowanie graczy i ilosc picia i jaka druzyna pije
 
   @override
   Widget build(BuildContext context) {
@@ -155,7 +155,7 @@ class _GameState extends State<Game> {
         child: RotatedBox(
           quarterTurns: whitePlayer ? 0 : 2,
           child: TextButton(
-              onPressed: () => switchPlayer(),
+              onPressed: () => switchPlayer(!whitePlayer),
               child: StreamBuilder<int>(
                 stream: whitePlayer
                     ? _whiteTimer.rawTime.cast<int>()
@@ -237,8 +237,8 @@ class _GameState extends State<Game> {
                           drinkingPlayers += '\n';
                         });
                         return Container(
-                          width: 200.0,
-                          height: 100.0,
+                          width: 100.0,
+                          height: 20.0,
                           child: AlertDialog(
                             title: !isWhite
                                 ? Center(child: Text('Biali piją!'))
@@ -252,14 +252,18 @@ class _GameState extends State<Game> {
                                   )
                                 : Center(
                                     child: Text('Czarni: ' +
-                                        whiteTeamShots[1].toString() +
+                                        blackTeamShots[1].toString() +
                                         ' kieliszków\n Teraz: \n' +
                                         drinkingPlayers)),
                           ),
                         );
                       });
                   fileManager.writeToFile(selectedPlayers);
-                  switchPlayer();
+                  if (shots == 7) {
+                    await endGame();
+                  }
+                  //Switches to opposite player
+                  switchPlayer(!isWhite);
                   break;
                 default:
                   break;
@@ -280,6 +284,118 @@ class _GameState extends State<Game> {
     }
   }
 
+  Widget overlayScreen(String title, String content) {
+    List<Player> players = fileManager.readFile();
+    return SafeArea(
+      child: Opacity(
+        opacity: 0.8,
+        child: Scaffold(
+          body: Stack(children: [
+            Container(
+                width: screenSize[0],
+                height: screenSize[1] * 4,
+                padding: EdgeInsets.all(20),
+                color: Colors.white),
+            Center(
+              child: Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Spacer(
+                      flex: 2,
+                    ),
+                    Text(
+                      title,
+                      style: TextStyle(color: Colors.black, fontSize: 40.0),
+                    ),
+                    Spacer(
+                      flex: 2,
+                    ),
+                    Text(
+                      content,
+                      style: TextStyle(color: Colors.black, fontSize: 30.0),
+                    ),
+                    Spacer(
+                      flex: 1,
+                    ),
+                    Text(
+                      'Tabela wyników',
+                      style: TextStyle(fontSize: 40.0),
+                    ),
+                    Spacer(
+                      flex: 1,
+                    ),
+                    Container(
+                        width: screenSize[0] / 1.2,
+                        height: 200,
+                        child: ListView.builder(
+                            shrinkWrap: true,
+                            itemBuilder: (BuildContext context, int index) {
+                              Player thisPlayer;
+                              if (index < players.length) {
+                                thisPlayer = players[index];
+                                return Center(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        border: Border.all(width: 1),
+                                        color: Colors.white60),
+                                    height: players.length + 30.0,
+                                    width: screenSize[0],
+                                    child: Center(
+                                      child: Container(
+                                        child: RichText(
+                                          strutStyle:
+                                              StrutStyle(fontSize: 25.0),
+                                          overflow: TextOverflow.ellipsis,
+                                          text: TextSpan(
+                                              text: thisPlayer.name +
+                                                  ' - ' +
+                                                  thisPlayer.totalDrinks
+                                                      .toString(),
+                                              style: TextStyle(
+                                                  wordSpacing: 8.0,
+                                                  color: Colors.black,
+                                                  fontFamily: 'EnchantedLand',
+                                                  fontSize: 25.0)),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                            })),
+                    Spacer(
+                      flex: 3,
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                          shape: BoxShape.rectangle, color: Colors.black),
+                      width: 150,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          "Wyjście",
+                          style: TextStyle(color: Colors.white, fontSize: 30.0),
+                        ),
+                      ),
+                    ),
+                    Spacer(
+                      flex: 4,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
   // ----------------------------- Funkcje ---------------------------------- //
 
   void pauseGame() {
@@ -287,20 +403,74 @@ class _GameState extends State<Game> {
     _blackTimer.onExecute.add(StopWatchExecute.stop);
   }
 
-  void switchPlayer() {
+  Future<void> endGame() async {
+    pauseGame();
     if (isWhite) {
+      whoWon = [true, true];
+    } else {
+      whoWon = [true, false];
+    }
+    await _showOverlay(context);
+    Navigator.pop(context);
+  }
+
+  void switchPlayer(bool toWhite) {
+    if (isWhite && !toWhite) {
       _whiteTimer.onExecute.add(StopWatchExecute.stop);
       _blackTimer.onExecute.add(StopWatchExecute.start);
       setState(() {
         isWhite = false;
       });
-    } else if (!isWhite) {
+    } else if (!isWhite && toWhite) {
       _whiteTimer.onExecute.add(StopWatchExecute.start);
       _blackTimer.onExecute.add(StopWatchExecute.stop);
       setState(() {
         isWhite = true;
       });
     }
+  }
+
+  Future<void> _showOverlay(BuildContext context) async {
+    await showGeneralDialog(
+        context: context,
+        barrierDismissible: false,
+        transitionDuration: Duration(milliseconds: 500),
+        transitionBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        pageBuilder: (context, animation, secondaryAnimation) {
+          if (whoWon[0] && whoWon[1]) {
+            Player mostDrunk = new Player('Najbardziej uchlany');
+            whiteTeam.forEach((element) {
+              if (element.totalDrinks > mostDrunk.totalDrinks) {
+                mostDrunk = element;
+              }
+            });
+            return overlayScreen(
+                'Biali wygrali wypijając: ' + whiteTeamShots[1].toString(),
+                'Najwięcej wypił/a: ' +
+                    mostDrunk.name +
+                    '\nwypijając: ' +
+                    mostDrunk.totalDrinks.toString() +
+                    ' kieliszków');
+          } else if (whoWon[0] && !whoWon[1]) {
+            Player mostDrunk = new Player('Najbardziej uchlany');
+            blackTeam.forEach((element) {
+              if (element.totalDrinks > mostDrunk.totalDrinks) {
+                mostDrunk = element;
+              }
+            });
+            return overlayScreen(
+                'Czarni wygrali wypijając: ' + blackTeamShots[1].toString(),
+                'Najwięcej wypił/a: ' +
+                    mostDrunk.name +
+                    '\nwypijając: ' +
+                    mostDrunk.totalDrinks.toString() +
+                    ' kieliszków');
+          } else {
+            throw Exception();
+          }
+        });
   }
 
   List<Player> selectRandomPlayers(bool isWhite, int shots) {
