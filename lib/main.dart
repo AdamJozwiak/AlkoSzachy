@@ -2,6 +2,7 @@ import 'package:alkochin/page/game.dart';
 import 'package:alkochin/page/home.dart';
 import 'package:alkochin/page/team_selection.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   runApp(MyApp());
@@ -12,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Alko Szachy',
+        title: 'AlkoSzachy',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
             // This is the theme of your application.
@@ -29,9 +30,9 @@ class MyApp extends StatelessWidget {
             // the app on. For desktop platforms, the controls will be smaller and
             // closer together (more dense) than on mobile platforms.
             visualDensity: VisualDensity.adaptivePlatformDensity,
-            fontFamily: 'EnchantedLand'),
+            fontFamily: GoogleFonts.lato().fontFamily),
         routes: {
-          '/': (context) => HomePage(title: 'Alko Szachy Auuu'),
+          '/': (context) => HomePage(title: 'AlkoSzachy'),
           '/teams': (context) => TeamSelection(),
           '/game': (context) => Game()
         });

@@ -25,7 +25,7 @@ dependencies:
     sdk: flutter
   path_provider: ^1.6.28
   stop_watch_timer: ^0.7.0
-
+  google_fonts: ^1.1.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -66,10 +66,10 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  fonts:
-    - family: EnchantedLand
-      fonts:
-        - asset: fonts/Enchanted_Land.otf
+  # fonts:
+  #   - family: EnchantedLand
+  #     fonts:
+  #       - asset: fonts/Enchanted_Land.otf
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
