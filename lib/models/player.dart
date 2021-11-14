@@ -1,12 +1,14 @@
 class Player {
   String name;
-  int currentDrinks;
   int totalDrinks;
+  int gameDrinks;
+  int currentDrinks;
   bool isWhite;
 
   Player(this.name) {
-    this.currentDrinks = 0;
     this.totalDrinks = 0;
+    this.gameDrinks = 0;
+    this.currentDrinks = 0;
     this.isWhite = true;
   }
 
