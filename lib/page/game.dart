@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:alkochin/models/gameStartInfo.dart';
 import 'package:alkochin/models/player.dart';
+import 'package:alkochin/widgets/customText.dart';
 import 'package:alkochin/widgets/file_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:alkochin/widgets/stop_watch_timer.dart';
@@ -13,6 +14,7 @@ class Game extends StatefulWidget {
 }
 
 class _GameState extends State<Game> {
+  List<Player> players = new List<Player>();
   List<Player> blackTeam = new List<Player>();
   List<Player> whiteTeam = new List<Player>();
   List<int> blackTeamShots = new List<int>(2);
@@ -58,8 +60,13 @@ class _GameState extends State<Game> {
         GameInfo gameInfo = ModalRoute.of(context).settings.arguments;
         _whiteTimer.setPresetMinuteTime(gameInfo.timer);
         _blackTimer.setPresetMinuteTime(gameInfo.timer);
+        players = gameInfo.players;
         whiteTeam = gameInfo.whitePlayers;
         blackTeam = gameInfo.blackPlayers;
+        players.forEach((element) {
+          element.gameDrinks = 0;
+          element.currentDrinks = 0;
+        });
         gameInfo = null;
 
         _whiteTimer.onExecute.add(StopWatchExecute.start);
@@ -98,9 +105,8 @@ class _GameState extends State<Game> {
               Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Text(
-                      'Gotowi do chlania?',
-                      style: TextStyle(fontSize: 50.0),
+                    CustomText(
+                      text: 'Gotowi do chlania?',
                     ),
                     Center(
                       child: Container(
@@ -115,9 +121,9 @@ class _GameState extends State<Game> {
                               });
                               return;
                             },
-                            child: Text(
-                              'OK!',
-                              style: TextStyle(fontSize: 30.0),
+                            child: CustomText(
+                              text: 'OK!',
+                              fontSize: 30.0,
                             )),
                       ),
                     )
@@ -167,9 +173,10 @@ class _GameState extends State<Game> {
                   final value = snapshot.data;
                   final displayTime =
                       StopWatchTimer.getDisplayTime(value, hours: false);
-                  return Text(
-                    displayTime,
-                    style: TextStyle(fontSize: 60.0, color: Colors.black),
+                  return CustomText(
+                    text: displayTime,
+                    fontSize: 60.0,
+                    color: Colors.black,
                   );
                 },
               )),
@@ -214,7 +221,7 @@ class _GameState extends State<Game> {
                 case 5:
                 case 7:
                 case 9:
-                  if (isWhite) {
+                  if (!isWhite) {
                     whiteTeamShots[0] = whiteTeamShots[1];
                     whiteTeamShots[1] += shots;
                   } else {
@@ -236,25 +243,45 @@ class _GameState extends State<Game> {
                           element.currentDrinks = 0;
                           drinkingPlayers += '\n';
                         });
-                        return Container(
-                          width: 100.0,
-                          height: 20.0,
-                          child: AlertDialog(
-                            title: !isWhite
-                                ? Center(child: Text('Biali piją!'))
-                                : Center(child: Text('Czarni piją!')),
-                            content: !isWhite
-                                ? Center(
-                                    child: Text('Biali: ' +
-                                        whiteTeamShots[1].toString() +
-                                        ' kieliszków\n Teraz: \n' +
-                                        drinkingPlayers),
-                                  )
-                                : Center(
-                                    child: Text('Czarni: ' +
-                                        blackTeamShots[1].toString() +
-                                        ' kieliszków\n Teraz: \n' +
-                                        drinkingPlayers)),
+
+                        return Center(
+                          child: Container(
+                            width: screenSize[0] - 10,
+                            height:
+                                screenSize[1] + (30.0 * selectedPlayers.length),
+                            child: AlertDialog(
+                              title: !isWhite
+                                  ? Center(
+                                      child: CustomText(
+                                          text: 'Biali piją!',
+                                          weight: FontWeight.bold))
+                                  : Center(
+                                      child: CustomText(
+                                          text: 'Czarni piją!',
+                                          weight: FontWeight.bold)),
+                              content: !isWhite
+                                  ? Center(
+                                      child: Column(
+                                        children: [
+                                          CustomText(
+                                              text: 'Biali:  ' +
+                                                  whiteTeamShots[1].toString() +
+                                                  '\n'),
+                                          CustomText(text: drinkingPlayers)
+                                        ],
+                                      ),
+                                    )
+                                  : Center(
+                                      child: Column(
+                                      children: [
+                                        CustomText(
+                                            text: 'Czarni: ' +
+                                                blackTeamShots[1].toString() +
+                                                '\n'),
+                                        CustomText(text: drinkingPlayers)
+                                      ],
+                                    )),
+                            ),
                           ),
                         );
                       });
@@ -285,7 +312,6 @@ class _GameState extends State<Game> {
   }
 
   Widget overlayScreen(String title, String content) {
-    List<Player> players = fileManager.readFile();
     return SafeArea(
       child: Opacity(
         opacity: 0.8,
@@ -305,23 +331,23 @@ class _GameState extends State<Game> {
                     Spacer(
                       flex: 2,
                     ),
-                    Text(
-                      title,
-                      style: TextStyle(color: Colors.black, fontSize: 40.0),
+                    CustomText(
+                      text: title,
+                      fontSize: 40.0,
                     ),
                     Spacer(
                       flex: 2,
                     ),
-                    Text(
-                      content,
-                      style: TextStyle(color: Colors.black, fontSize: 30.0),
+                    CustomText(
+                      text: content,
+                      fontSize: 30.0,
                     ),
                     Spacer(
                       flex: 1,
                     ),
-                    Text(
-                      'Tabela wyników',
-                      style: TextStyle(fontSize: 40.0),
+                    CustomText(
+                      text: 'Tabela wyników',
+                      fontSize: 40.0,
                     ),
                     Spacer(
                       flex: 1,
@@ -351,12 +377,11 @@ class _GameState extends State<Game> {
                                           text: TextSpan(
                                               text: thisPlayer.name +
                                                   ' - ' +
-                                                  thisPlayer.totalDrinks
+                                                  thisPlayer.gameDrinks
                                                       .toString(),
                                               style: TextStyle(
                                                   wordSpacing: 8.0,
                                                   color: Colors.black,
-                                                  fontFamily: 'EnchantedLand',
                                                   fontSize: 25.0)),
                                         ),
                                       ),
@@ -377,9 +402,10 @@ class _GameState extends State<Game> {
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        child: Text(
-                          "Wyjście",
-                          style: TextStyle(color: Colors.white, fontSize: 30.0),
+                        child: CustomText(
+                          text: "Wyjście",
+                          fontSize: 30.0,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -439,34 +465,26 @@ class _GameState extends State<Game> {
           return FadeTransition(opacity: animation, child: child);
         },
         pageBuilder: (context, animation, secondaryAnimation) {
+          Player mostDrunk = new Player('Najbardziej uchlany');
+          players.forEach((element) {
+            if (element.gameDrinks > mostDrunk.gameDrinks) {
+              mostDrunk = element;
+            }
+          });
           if (whoWon[0] && whoWon[1]) {
-            Player mostDrunk = new Player('Najbardziej uchlany');
-            whiteTeam.forEach((element) {
-              if (element.totalDrinks > mostDrunk.totalDrinks) {
-                mostDrunk = element;
-              }
-            });
             return overlayScreen(
                 'Biali wygrali wypijając: ' + whiteTeamShots[1].toString(),
-                'Najwięcej wypił/a: ' +
+                'Najwięcej wypił/a:\n' +
                     mostDrunk.name +
-                    '\nwypijając: ' +
-                    mostDrunk.totalDrinks.toString() +
-                    ' kieliszków');
+                    ' - ' +
+                    mostDrunk.gameDrinks.toString());
           } else if (whoWon[0] && !whoWon[1]) {
-            Player mostDrunk = new Player('Najbardziej uchlany');
-            blackTeam.forEach((element) {
-              if (element.totalDrinks > mostDrunk.totalDrinks) {
-                mostDrunk = element;
-              }
-            });
             return overlayScreen(
                 'Czarni wygrali wypijając: ' + blackTeamShots[1].toString(),
-                'Najwięcej wypił/a: ' +
+                'Najwięcej wypił/a:\n' +
                     mostDrunk.name +
-                    '\nwypijając: ' +
-                    mostDrunk.totalDrinks.toString() +
-                    ' kieliszków');
+                    ' - ' +
+                    mostDrunk.gameDrinks.toString());
           } else {
             throw Exception();
           }
@@ -489,6 +507,7 @@ class _GameState extends State<Game> {
         _random = new Random();
         Player selectedPlayer = whiteTeam[_random.nextInt(whiteTeam.length)];
         selectedPlayer.currentDrinks += 1;
+        selectedPlayer.gameDrinks += 1;
         selectedPlayer.totalDrinks += 1;
         if (selectedPlayer.currentDrinks <= 1)
           selectedPlayers.add(selectedPlayer);
@@ -498,6 +517,7 @@ class _GameState extends State<Game> {
         _random = new Random();
         Player selectedPlayer = blackTeam[_random.nextInt(blackTeam.length)];
         selectedPlayer.currentDrinks += 1;
+        selectedPlayer.gameDrinks += 1;
         selectedPlayer.totalDrinks += 1;
         if (selectedPlayer.currentDrinks <= 1)
           selectedPlayers.add(selectedPlayer);

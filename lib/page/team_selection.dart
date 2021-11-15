@@ -2,13 +2,14 @@
 
 import 'dart:io';
 import 'package:alkochin/models/player.dart';
+import 'package:alkochin/widgets/customText.dart';
 import 'package:alkochin/widgets/file_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 
 class TeamSelection extends StatefulWidget {
   const TeamSelection({Key key}) : super(key: key);
-  final fontSize = 55.0;
   @override
   _TeamSelectionState createState() => _TeamSelectionState();
 }
@@ -19,10 +20,12 @@ class _TeamSelectionState extends State<TeamSelection> {
   List<Player> blackPlayers;
   String _playerName = '';
   final _formKey = GlobalKey<FormState>();
-  final _playerNameSize = 30.0;
   FileManager fileManager;
   bool fileManagerInitialized = false;
   List<double> _screenSize;
+  final _titleSize = 35.0;
+  final _contentSize = 20.0;
+  final _columnHeight = 480.0;
 
   @override
   void initState() {
@@ -67,9 +70,10 @@ class _TeamSelectionState extends State<TeamSelection> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(
-          'Wybierz drużyny',
-          style: TextStyle(fontSize: 35.0, letterSpacing: 2.0),
+        title: CustomText(
+          text: 'Wybierz drużyny',
+          fontSize: _titleSize,
+          letterSpacing: 2.0,
         ),
       ),
       backgroundColor: Colors.grey[300],
@@ -80,18 +84,19 @@ class _TeamSelectionState extends State<TeamSelection> {
               height: 20.0,
             ),
             Container(
-              height: 480.0,
+              height: _columnHeight,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Spacer(),
                   Container(
-                    width: 120.0,
+                    width: 160.0,
                     child: Column(
                       children: [
-                        Text(
-                          'Białe',
-                          style: TextStyle(
-                              fontSize: widget.fontSize, color: Colors.white),
+                        CustomText(
+                          text: 'Białe',
+                          fontSize: _titleSize,
+                          color: Colors.white,
                           textAlign: TextAlign.center,
                         ),
                         Divider(
@@ -104,27 +109,29 @@ class _TeamSelectionState extends State<TeamSelection> {
                             itemBuilder: (BuildContext context, int index) {
                               return Container(
                                 child: Center(
-                                    child: Text(
-                                  '${whitePlayers[index].name} - ${whitePlayers[index].totalDrinks}',
-                                  style: TextStyle(fontSize: _playerNameSize),
+                                    child: CustomText(
+                                  text:
+                                      '${whitePlayers[index].name} - ${whitePlayers[index].totalDrinks}',
+                                  fontSize: _contentSize,
                                 )),
                               );
                             }),
                       ],
                     ),
                   ),
+                  Spacer(),
                   VerticalDivider(
-                    width: 120.0,
                     color: Colors.black45,
                     thickness: 3.0,
                   ),
+                  Spacer(),
                   Container(
-                    width: 120.0,
+                    width: 160.0,
                     child: Column(
                       children: [
-                        Text(
-                          'Czarne',
-                          style: TextStyle(fontSize: widget.fontSize),
+                        CustomText(
+                          text: 'Czarne',
+                          fontSize: _titleSize,
                           textAlign: TextAlign.center,
                         ),
                         Divider(
@@ -137,15 +144,16 @@ class _TeamSelectionState extends State<TeamSelection> {
                             itemBuilder: (BuildContext context, int index) {
                               return Container(
                                 child: Center(
-                                    child: Text(
-                                        '${blackPlayers[index].name} - ${blackPlayers[index].totalDrinks} ',
-                                        style: TextStyle(
-                                            fontSize: _playerNameSize))),
+                                    child: CustomText(
+                                        text:
+                                            '${blackPlayers[index].name} - ${blackPlayers[index].totalDrinks} ',
+                                        fontSize: _contentSize)),
                               );
                             }),
                       ],
                     ),
                   ),
+                  Spacer()
                 ],
               ),
             ),
@@ -213,7 +221,7 @@ class _TeamSelectionState extends State<TeamSelection> {
                       Icons.delete_forever,
                       color: Colors.red[700],
                     ),
-                    label: Text('')),
+                    label: CustomText(text: '')),
               )
             ],
           ),
@@ -225,10 +233,10 @@ class _TeamSelectionState extends State<TeamSelection> {
   Widget teamSelectionDialog(
       List<Player> initialPlayers, void Function(void Function()) stateSetter) {
     final TextEditingController _textController = new TextEditingController();
-    double _baseDialogHeight = 150.0;
+    double _baseDialogHeight = 170.0;
     int _numberOfPlayers = initialPlayers.length;
     double _boxSpacing = 40;
-    double _noPlayersLabelSize = 70.0;
+    double _noPlayersLabelSize = 60.0;
     double _maxHeight = 200.0;
     List<List<bool>> checkBoxState = new List();
     String _occupiedName = '';
@@ -240,7 +248,7 @@ class _TeamSelectionState extends State<TeamSelection> {
     return SingleChildScrollView(
       child: Container(
         height: _baseDialogHeight +
-            (_numberOfPlayers < 3 ? (_numberOfPlayers * 20.0) : _maxHeight),
+            (_numberOfPlayers < 4 ? (_numberOfPlayers * 25.0) : _maxHeight),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -276,8 +284,9 @@ class _TeamSelectionState extends State<TeamSelection> {
                                       text: thisPlayer.name,
                                       style: TextStyle(
                                           color: Colors.black,
-                                          fontFamily: 'EnchantedLand',
-                                          fontSize: 25.0)),
+                                          fontFamily:
+                                              GoogleFonts.lato().fontFamily,
+                                          fontSize: 20.0)),
                                 ),
                               ),
                             ),
@@ -379,7 +388,7 @@ class _TeamSelectionState extends State<TeamSelection> {
                                     Icons.delete_forever,
                                     color: Colors.red[700],
                                   ),
-                                  label: Text('')),
+                                  label: CustomText(text: '')),
                             )
                           ],
                         ),
@@ -389,13 +398,10 @@ class _TeamSelectionState extends State<TeamSelection> {
                         height: _noPlayersLabelSize,
                         child: Column(
                           children: [
-                            SizedBox(
-                              height: 20.0,
-                            ),
                             Center(
-                              child: Text(
-                                'Brak graczy',
-                                style: TextStyle(fontSize: 40.0),
+                              child: CustomText(
+                                text: 'Brak graczy',
+                                fontSize: 40.0,
                               ),
                             ),
                           ],
@@ -407,8 +413,8 @@ class _TeamSelectionState extends State<TeamSelection> {
                     }
                   }),
             ),
-            SizedBox(
-              height: 35.0,
+            Spacer(
+              flex: 4,
             ),
             Container(
               width: 200.0,
@@ -420,7 +426,7 @@ class _TeamSelectionState extends State<TeamSelection> {
                     controller: _textController,
                     style: TextStyle(fontSize: 30.0),
                     decoration:
-                        InputDecoration(errorStyle: TextStyle(fontSize: 25.0)),
+                        InputDecoration(errorStyle: TextStyle(fontSize: 15.0)),
                     onFieldSubmitted: (value) {
                       players.forEach((element) {
                         if (element.name == _playerName) {
@@ -448,7 +454,9 @@ class _TeamSelectionState extends State<TeamSelection> {
                     },
                     onChanged: (value) => _playerName = value,
                     validator: (value) {
-                      if (value == _occupiedName) {
+                      if (value == _occupiedName &&
+                          _occupiedName != '' &&
+                          _occupiedName != null) {
                         return 'Ta nazwa jest już zajęta!';
                       }
                       return (value == null || value.isEmpty)
@@ -457,7 +465,7 @@ class _TeamSelectionState extends State<TeamSelection> {
                     },
                   )),
             ),
-            SizedBox(height: 2.0),
+            Spacer(),
             ElevatedButton(
                 style: ElevatedButton.styleFrom(
                     elevation: 10,
@@ -490,10 +498,14 @@ class _TeamSelectionState extends State<TeamSelection> {
                   }
                   setState(() {});
                 },
-                child: Text(
-                  'Dodaj',
-                  style: TextStyle(fontSize: 30.0, color: Colors.black),
+                child: CustomText(
+                  text: 'Dodaj',
+                  fontSize: 30.0,
+                  color: Colors.black,
                 )),
+            Spacer(
+              flex: 1,
+            )
           ],
         ),
       ),
