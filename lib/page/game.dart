@@ -1,10 +1,10 @@
 import 'dart:math';
-import 'package:alkochin/models/gameStartInfo.dart';
-import 'package:alkochin/models/player.dart';
-import 'package:alkochin/widgets/customText.dart';
-import 'package:alkochin/widgets/file_manager.dart';
+import 'package:alkoszachy/models/gameStartInfo.dart';
+import 'package:alkoszachy/models/player.dart';
+import 'package:alkoszachy/widgets/customText.dart';
+import 'package:alkoszachy/widgets/file_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:alkochin/widgets/stop_watch_timer.dart';
+import 'package:alkoszachy/widgets/stop_watch_timer.dart';
 
 class Game extends StatefulWidget {
   const Game({Key key}) : super(key: key);
@@ -20,10 +20,15 @@ class _GameState extends State<Game> {
   List<int> blackTeamShots = new List<int>(2);
   List<int> whiteTeamShots = new List<int>(2);
   List<double> screenSize = new List<double>(2);
+  List<bool> whoWon;
   bool isWhite;
   bool gameStarted = false;
   bool firstStart = true;
-  List<bool> whoWon;
+  bool gameEnded = false;
+  bool countOn = false;
+  bool kingPressed = false;
+  int timerValue = 0;
+  int initialTime = 0;
   final StopWatchTimer _whiteTimer = new StopWatchTimer();
   final StopWatchTimer _blackTimer = new StopWatchTimer();
   FileManager fileManager = new FileManager();
@@ -60,6 +65,7 @@ class _GameState extends State<Game> {
         GameInfo gameInfo = ModalRoute.of(context).settings.arguments;
         _whiteTimer.setPresetMinuteTime(gameInfo.timer);
         _blackTimer.setPresetMinuteTime(gameInfo.timer);
+        initialTime = gameInfo.timer;
         players = gameInfo.players;
         whiteTeam = gameInfo.whitePlayers;
         blackTeam = gameInfo.blackPlayers;
@@ -68,13 +74,29 @@ class _GameState extends State<Game> {
           element.currentDrinks = 0;
         });
         gameInfo = null;
-
         _whiteTimer.onExecute.add(StopWatchExecute.start);
+        Future.delayed(Duration(seconds: initialTime), () async {
+          //minutes: gameInfo.timer), () {
+          checkTime();
+        });
         setState(() {
           firstStart = false;
         });
       }
       return mainScreen(1.0);
+    }
+  }
+
+  Future checkTime() async {
+    if (kingPressed) {
+      return null;
+    } else if (gameEnded) {
+      return await endGame();
+    } else {
+      return Future.delayed(Duration(microseconds: timerValue), () async {
+        //minutes: gameInfo.timer), () {
+        return checkTime();
+      });
     }
   }
 
@@ -171,6 +193,12 @@ class _GameState extends State<Game> {
                     : _blackTimer.rawTime.value,
                 builder: (context, snapshot) {
                   final value = snapshot.data;
+                  if (value > 0.0) {
+                    this.countOn = true;
+                  }
+                  if (countOn && value == 0.0) {
+                    this.gameEnded = true;
+                  }
                   final displayTime =
                       StopWatchTimer.getDisplayTime(value, hours: false);
                   return CustomText(
@@ -191,12 +219,12 @@ class _GameState extends State<Game> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          pieceIcon('pawn.png', 1),
-          pieceIcon('knight.png', 3),
-          pieceIcon('bishop.png', 3),
-          pieceIcon('rook.png', 5),
-          pieceIcon('queen.png', 9),
-          pieceIcon('king.png', 7, 30.0),
+          pieceIcon('assets/pawn.png', 1),
+          pieceIcon('assets/knight.png', 3),
+          pieceIcon('assets/bishop.png', 3),
+          pieceIcon('assets/rook.png', 5),
+          pieceIcon('assets/queen.png', 9),
+          pieceIcon('assets/king.png', 7, 30.0),
         ],
       ),
     );
@@ -250,35 +278,53 @@ class _GameState extends State<Game> {
                             height:
                                 screenSize[1] + (30.0 * selectedPlayers.length),
                             child: AlertDialog(
+                              titlePadding:
+                                  EdgeInsets.fromLTRB(0.0, 40.0, 0.0, 0.0),
                               title: !isWhite
                                   ? Center(
                                       child: CustomText(
-                                          text: 'Biali piją!',
+                                          text: 'Biali piją: ' +
+                                              whiteTeamShots[1].toString() +
+                                              ' !',
                                           weight: FontWeight.bold))
                                   : Center(
                                       child: CustomText(
-                                          text: 'Czarni piją!',
+                                          text: 'Czarni piją: ' +
+                                              blackTeamShots[1].toString() +
+                                              ' !',
                                           weight: FontWeight.bold)),
                               content: !isWhite
                                   ? Center(
                                       child: Column(
                                         children: [
-                                          CustomText(
-                                              text: 'Biali:  ' +
-                                                  whiteTeamShots[1].toString() +
-                                                  '\n'),
-                                          CustomText(text: drinkingPlayers)
+                                          Spacer(
+                                            flex: 2,
+                                          ),
+                                          CustomText(text: drinkingPlayers),
+                                          Spacer(
+                                            flex: 2,
+                                          ),
+                                          exitButton(context),
+                                          Spacer(
+                                            flex: 2,
+                                          )
                                         ],
                                       ),
                                     )
                                   : Center(
                                       child: Column(
                                       children: [
-                                        CustomText(
-                                            text: 'Czarni: ' +
-                                                blackTeamShots[1].toString() +
-                                                '\n'),
-                                        CustomText(text: drinkingPlayers)
+                                        Spacer(
+                                          flex: 1,
+                                        ),
+                                        CustomText(text: drinkingPlayers),
+                                        Spacer(
+                                          flex: 1,
+                                        ),
+                                        exitButton(context),
+                                        Spacer(
+                                          flex: 1,
+                                        )
                                       ],
                                     )),
                             ),
@@ -287,7 +333,8 @@ class _GameState extends State<Game> {
                       });
                   fileManager.writeToFile(selectedPlayers);
                   if (shots == 7) {
-                    await endGame();
+                    kingPressed = true;
+                    return await endGame(true);
                   }
                   //Switches to opposite player
                   switchPlayer(!isWhite);
@@ -322,10 +369,9 @@ class _GameState extends State<Game> {
                 height: screenSize[1] * 4,
                 padding: EdgeInsets.all(20),
                 color: Colors.white),
-            Center(
-              child: Expanded(
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Expanded(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Spacer(
@@ -394,18 +440,20 @@ class _GameState extends State<Game> {
                       flex: 3,
                     ),
                     Container(
-                      decoration: BoxDecoration(
-                          shape: BoxShape.rectangle, color: Colors.black),
-                      width: 150,
+                      width: 140,
                       height: 50,
-                      child: ElevatedButton(
+                      child: RaisedButton(
+                        color: Colors.white70,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0),
+                            side: BorderSide(color: Colors.black12)),
                         onPressed: () {
                           Navigator.pop(context);
                         },
                         child: CustomText(
-                          text: "Wyjście",
+                          text: 'Wyjdź',
                           fontSize: 30.0,
-                          color: Colors.white,
+                          color: Colors.black,
                         ),
                       ),
                     ),
@@ -415,7 +463,7 @@ class _GameState extends State<Game> {
                   ],
                 ),
               ),
-            ),
+            ]),
           ]),
         ),
       ),
@@ -429,11 +477,17 @@ class _GameState extends State<Game> {
     _blackTimer.onExecute.add(StopWatchExecute.stop);
   }
 
-  Future<void> endGame() async {
+  Future<void> endGame([bool puttonPressed = false]) async {
     pauseGame();
-    if (isWhite) {
+    if (puttonPressed) {
+      if (isWhite) {
+        whoWon = [true, true];
+      } else {
+        whoWon = [true, false];
+      }
+    } else if (_whiteTimer.rawTime.value > _blackTimer.rawTime.value) {
       whoWon = [true, true];
-    } else {
+    } else if (_whiteTimer.rawTime.value < _blackTimer.rawTime.value) {
       whoWon = [true, false];
     }
     await _showOverlay(context);
@@ -485,8 +539,6 @@ class _GameState extends State<Game> {
                     mostDrunk.name +
                     ' - ' +
                     mostDrunk.gameDrinks.toString());
-          } else {
-            throw Exception();
           }
         });
   }
@@ -524,5 +576,21 @@ class _GameState extends State<Game> {
       }
     }
     return selectedPlayers;
+  }
+
+  RaisedButton exitButton(BuildContext context) {
+    return RaisedButton(
+      color: Colors.white70,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15.0),
+          side: BorderSide(color: Colors.black12)),
+      onPressed: () {
+        Navigator.pop(context);
+      },
+      child: CustomText(
+        text: 'Wyjdź',
+        fontSize: 25.0,
+      ),
+    );
   }
 }

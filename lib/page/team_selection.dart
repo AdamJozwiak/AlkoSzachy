@@ -1,9 +1,9 @@
 // ignore_for_file: unused_impor, deprecated_member_use, unused_import
 
 import 'dart:io';
-import 'package:alkochin/models/player.dart';
-import 'package:alkochin/widgets/customText.dart';
-import 'package:alkochin/widgets/file_manager.dart';
+import 'package:alkoszachy/models/player.dart';
+import 'package:alkoszachy/widgets/customText.dart';
+import 'package:alkoszachy/widgets/file_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
@@ -68,166 +68,191 @@ class _TeamSelectionState extends State<TeamSelection> {
       MediaQuery.of(context).size.height
     ];
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: CustomText(
-          text: 'Wybierz drużyny',
-          fontSize: _titleSize,
-          letterSpacing: 2.0,
+        appBar: AppBar(
+          centerTitle: true,
+          title: CustomText(
+            text: 'Wybierz drużyny',
+            fontSize: _titleSize,
+            letterSpacing: 2.0,
+          ),
+          backgroundColor: Colors.white60,
         ),
-      ),
-      backgroundColor: Colors.grey[300],
-      body: ListView(shrinkWrap: true, children: [
-        Column(
-          children: [
+        backgroundColor: Colors.white60,
+        body: Stack(children: [
+          Image.asset(
+            "assets/alchess_baner.png",
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          ),
+          ListView(shrinkWrap: true, children: [
+            Column(
+              children: [
+                SizedBox(
+                  height: 20.0,
+                ),
+                Container(
+                  height: _columnHeight,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Spacer(),
+                      Container(
+                        width: 160.0,
+                        child: Column(
+                          children: [
+                            CustomText(
+                              text: 'Białe',
+                              fontSize: _titleSize,
+                              color: Colors.black54,
+                              textAlign: TextAlign.center,
+                            ),
+                            Divider(
+                              color: Colors.black45,
+                              height: 20.0,
+                            ),
+                            ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: whitePlayers.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return Container(
+                                    child: Center(
+                                        child: CustomText(
+                                      text:
+                                          '${whitePlayers[index].name} - ${whitePlayers[index].totalDrinks}',
+                                      fontSize: _contentSize,
+                                    )),
+                                  );
+                                }),
+                          ],
+                        ),
+                      ),
+                      Spacer(),
+                      VerticalDivider(
+                        color: Colors.black45,
+                        thickness: 3.0,
+                      ),
+                      Spacer(),
+                      Container(
+                        width: 160.0,
+                        child: Column(
+                          children: [
+                            CustomText(
+                              text: 'Czarne',
+                              fontSize: _titleSize,
+                              textAlign: TextAlign.center,
+                            ),
+                            Divider(
+                              color: Colors.black45,
+                              height: 20.0,
+                            ),
+                            ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: blackPlayers.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return Container(
+                                    child: Center(
+                                        child: CustomText(
+                                            text:
+                                                '${blackPlayers[index].name} - ${blackPlayers[index].totalDrinks} ',
+                                            fontSize: _contentSize)),
+                                  );
+                                }),
+                          ],
+                        ),
+                      ),
+                      Spacer()
+                    ],
+                  ),
+                ),
+              ],
+            ),
             SizedBox(
-              height: 20.0,
+              height: 10.0,
             ),
             Container(
-              height: _columnHeight,
+              height: 80.0,
+              width: _screenSize[0],
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Spacer(),
-                  Container(
-                    width: 160.0,
-                    child: Column(
-                      children: [
-                        CustomText(
-                          text: 'Białe',
-                          fontSize: _titleSize,
-                          color: Colors.white,
-                          textAlign: TextAlign.center,
-                        ),
-                        Divider(
-                          color: Colors.black45,
-                          height: 20.0,
-                        ),
-                        ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: whitePlayers.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return Container(
-                                child: Center(
-                                    child: CustomText(
-                                  text:
-                                      '${whitePlayers[index].name} - ${whitePlayers[index].totalDrinks}',
-                                  fontSize: _contentSize,
-                                )),
-                              );
-                            }),
-                      ],
+                  Spacer(
+                    flex: 9,
+                  ),
+                  InkResponse(
+                    child: Container(
+                      width: 55.0,
+                      height: 80.0,
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey,
+                          boxShadow: [
+                            BoxShadow(spreadRadius: 1.0, blurRadius: 5)
+                          ]),
+                      child: players.isEmpty
+                          ? Icon(Icons.add)
+                          : Icon(
+                              Icons.theater_comedy,
+                              size: 35,
+                            ),
                     ),
+                    onTap: () async {
+                      showDialog(
+                          context: context,
+                          builder: (context) {
+                            return StatefulBuilder(
+                              builder: (context, stateSetter) {
+                                return AlertDialog(
+                                  backgroundColor: Colors.white70,
+                                  content:
+                                      teamSelectionDialog(players, stateSetter),
+                                );
+                              },
+                            );
+                          });
+                    },
                   ),
-                  Spacer(),
-                  VerticalDivider(
-                    color: Colors.black45,
-                    thickness: 3.0,
+                  Spacer(
+                    flex: 4,
                   ),
-                  Spacer(),
                   Container(
-                    width: 160.0,
-                    child: Column(
-                      children: [
-                        CustomText(
-                          text: 'Czarne',
-                          fontSize: _titleSize,
-                          textAlign: TextAlign.center,
-                        ),
-                        Divider(
-                          color: Colors.black45,
-                          height: 20.0,
-                        ),
-                        ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: blackPlayers.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return Container(
-                                child: Center(
-                                    child: CustomText(
-                                        text:
-                                            '${blackPlayers[index].name} - ${blackPlayers[index].totalDrinks} ',
-                                        fontSize: _contentSize)),
-                              );
-                            }),
-                      ],
-                    ),
-                  ),
-                  Spacer()
+                      width: 80.0,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CustomText(
+                            text: 'Wyczyść\nKieliszki',
+                            fontSize: 10.0,
+                            fontFamily: GoogleFonts.oxygen().fontFamily,
+                          ),
+                          TextButton.icon(
+                              style: TextButton.styleFrom(
+                                  padding:
+                                      EdgeInsets.fromLTRB(8.0, 0.0, 0.0, 0.0),
+                                  shape: new RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20.0),
+                                  )),
+                              onPressed: () {
+                                players.forEach((element) {
+                                  element.totalDrinks = 0;
+                                });
+                                fileManager.writeToFile(players, true);
+                                setState(() {});
+                              },
+                              icon: Icon(
+                                Icons.delete_forever,
+                                color: Colors.red[700],
+                              ),
+                              label: CustomText(text: '')),
+                        ],
+                      )),
+                  Spacer(
+                    flex: 1,
+                  )
                 ],
               ),
             ),
-          ],
-        ),
-        SizedBox(
-          height: 10.0,
-        ),
-        Container(
-          height: 80.0,
-          width: _screenSize[0],
-          child: Row(
-            children: [
-              Spacer(
-                flex: 3,
-              ),
-              InkResponse(
-                child: Container(
-                  width: 55.0,
-                  height: 80.0,
-                  decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey,
-                      boxShadow: [BoxShadow(spreadRadius: 1.0, blurRadius: 5)]),
-                  child: players.isEmpty
-                      ? Icon(Icons.add)
-                      : Icon(
-                          Icons.theater_comedy,
-                          size: 35,
-                        ),
-                ),
-                onTap: () async {
-                  showDialog(
-                      context: context,
-                      builder: (context) {
-                        return StatefulBuilder(
-                          builder: (context, stateSetter) {
-                            return AlertDialog(
-                              backgroundColor: Colors.white70,
-                              content:
-                                  teamSelectionDialog(players, stateSetter),
-                            );
-                          },
-                        );
-                      });
-                },
-              ),
-              Spacer(
-                flex: 2,
-              ),
-              Container(
-                width: 60.0,
-                child: FlatButton.icon(
-                    shape: new RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100.0),
-                    ),
-                    onPressed: () {
-                      players.forEach((element) {
-                        element.totalDrinks = 0;
-                      });
-                      fileManager.writeToFile(players, true);
-                      setState(() {});
-                    },
-                    icon: Icon(
-                      Icons.delete_forever,
-                      color: Colors.red[700],
-                    ),
-                    label: CustomText(text: '')),
-              )
-            ],
-          ),
-        ),
-      ]),
-    );
+          ]),
+        ]));
   }
 
   Widget teamSelectionDialog(
