@@ -1,4 +1,4 @@
-import 'package:alkochin/models/player.dart';
+import 'package:alkoszachy/models/player.dart';
 
 class GameInfo {
   final int timer;

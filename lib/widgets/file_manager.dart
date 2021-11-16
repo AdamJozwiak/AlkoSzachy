@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:math';
-import 'package:alkochin/models/player.dart';
+import 'package:alkoszachy/models/player.dart';
 import 'package:path_provider/path_provider.dart';
 
 class FileManager {

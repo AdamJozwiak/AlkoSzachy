@@ -1,6 +1,6 @@
-import 'package:alkochin/page/game.dart';
-import 'package:alkochin/page/home.dart';
-import 'package:alkochin/page/team_selection.dart';
+import 'package:alkoszachy/page/game.dart';
+import 'package:alkoszachy/page/home.dart';
+import 'package:alkoszachy/page/team_selection.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -32,9 +32,9 @@ class MyApp extends StatelessWidget {
             visualDensity: VisualDensity.adaptivePlatformDensity,
             fontFamily: GoogleFonts.lato().fontFamily),
         routes: {
-          '/': (context) => HomePage(title: 'AlkoSzachy'),
+          '/': (context) => HomePage(title: 'ALKO\nSZACHY'),
           '/teams': (context) => TeamSelection(),
-          '/game': (context) => Game()
+          '/game': (context) => Game(),
         });
   }
 }
