@@ -188,41 +188,47 @@ class _HomePageState extends State<HomePage> {
                             this.players = fileManager.readFile();
                             this.whitePlayers.clear();
                             this.blackPlayers.clear();
-                            if (this.players.isNotEmpty) {
-                              this.players.forEach((player) {
-                                if (player.isWhite) {
-                                  this.whitePlayers.add(player);
-                                } else {
-                                  this.blackPlayers.add(player);
-                                }
-                              });
-                            }
-                            if (this.players.isEmpty) {
-                              setState(() {
-                                buttonError[1] = true;
-                              });
-                              return;
-                            } else if (this.players.length >= 2) {
-                              setState(() {
-                                buttonError[1] = false;
-                              });
-                              if (this.whitePlayers.length > 0 &&
-                                  this.blackPlayers.length > 0) {
-                                setState(() {
-                                  buttonError[2] = false;
+                            if (this.players != null) {
+                              if (this.players.isNotEmpty) {
+                                this.players.forEach((player) {
+                                  if (player.isWhite) {
+                                    this.whitePlayers.add(player);
+                                  } else {
+                                    this.blackPlayers.add(player);
+                                  }
                                 });
+                              }
+                              if (this.players.isEmpty) {
+                                setState(() {
+                                  buttonError[1] = true;
+                                });
+                                return;
+                              } else if (this.players.length >= 2) {
+                                setState(() {
+                                  buttonError[1] = false;
+                                });
+                                if (this.whitePlayers.length > 0 &&
+                                    this.blackPlayers.length > 0) {
+                                  setState(() {
+                                    buttonError[2] = false;
+                                  });
+                                } else {
+                                  setState(() {
+                                    buttonError[2] = true;
+                                  });
+                                  return;
+                                }
                               } else {
                                 setState(() {
+                                  buttonError[1] = false;
                                   buttonError[2] = true;
                                 });
                                 return;
                               }
                             } else {
                               setState(() {
-                                buttonError[1] = false;
-                                buttonError[2] = true;
+                                buttonError[1] = true;
                               });
-                              return;
                             }
 
                             //Check if every condition is met
