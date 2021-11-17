@@ -44,244 +44,260 @@ class _HomePageState extends State<HomePage> {
         child: Scaffold(
           backgroundColor: Colors.grey[300],
           body: SafeArea(
-            child: Stack(children: [
-              Image.asset(
-                "assets/alchess_baner.png",
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-              ),
-              Opacity(
-                opacity: 0.9,
-                child: Padding(
-                  padding:
-                      EdgeInsets.fromLTRB(0.0, screenSize[1] / 20, 0.0, 0.0),
-                  child: Center(
-                    heightFactor: 1.5,
-                    child: CustomText(
-                      text: widget.title,
-                      fontSize: 45.0,
-                      fontFamily: GoogleFonts.cardo().fontFamily,
-                      weight: FontWeight.w800,
-                      letterSpacing: 2.0,
-                      color: Colors.black,
-                      backgroundColor: Colors.white,
-                      bgWidth: screenSize[0] / 1.134,
-                      bgHeight: screenSize[1] / 5,
+            child: ListView(
+                shrinkWrap: true,
+                itemExtent: screenSize[1] / 1.02,
+                children: [
+                  Stack(children: [
+                    Image.asset(
+                      "assets/alchess_baner.png",
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
                     ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding:
-                    EdgeInsets.fromLTRB(0.0, screenSize[1] / 10, 0.0, 10.0),
-                child: ListView(children: [
-                  Center(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        SizedBox(
-                          height: screenSize[1] * 0.28,
-                        ),
-                        CustomText(
-                          text: 'Ustaw czas gry',
-                          fontSize: 30.0,
-                        ),
-                        SizedBox(
-                          height: screenSize[1] * 0.01,
-                        ),
-                        Container(
-                          width: 240.0,
-                          height: 50.0,
-                          child: Form(
-                            key: _formKey,
-                            child: Focus(
-                              child: TextFormField(
-                                initialValue:
-                                    timer != 0.0 ? timer.toString() : '',
-                                decoration: InputDecoration(
-                                    contentPadding: EdgeInsets.fromLTRB(
-                                        -10.0, 10.0, 10.0, 10.0),
-                                    hintText: timer.toString(),
-                                    border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(20.0)),
-                                    fillColor: Colors.white70,
-                                    filled: true,
-                                    prefixIcon: Icon(Icons.timer),
-                                    suffix: CustomText(
-                                      text: 'minut',
-                                      fontSize: 15.0,
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: <Widget>[
+                                Spacer(
+                                  flex: 2,
+                                ),
+                                Opacity(
+                                  opacity: 0.9,
+                                  child: CustomText(
+                                    text: widget.title,
+                                    fontSize: 45.0,
+                                    fontFamily: GoogleFonts.cardo().fontFamily,
+                                    weight: FontWeight.w800,
+                                    letterSpacing: 2.0,
+                                    color: Colors.black,
+                                    backgroundColor: Colors.white,
+                                    bgWidth: screenSize[0] / 1.134,
+                                    bgHeight: screenSize[1] / 5,
+                                  ),
+                                ),
+                                Spacer(
+                                  flex: 1,
+                                ),
+                                CustomText(
+                                  text: 'Ustaw czas gry',
+                                  fontSize: 30.0,
+                                ),
+                                SizedBox(
+                                  height: screenSize[1] * 0.01,
+                                ),
+                                Container(
+                                  width: 240.0,
+                                  height: 50.0,
+                                  child: Form(
+                                    key: _formKey,
+                                    child: Focus(
+                                      child: TextFormField(
+                                        initialValue: timer != 0.0
+                                            ? timer.toString()
+                                            : '',
+                                        decoration: InputDecoration(
+                                            contentPadding: EdgeInsets.fromLTRB(
+                                                -10.0, 10.0, 10.0, 10.0),
+                                            hintText: timer.toString(),
+                                            border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        20.0)),
+                                            fillColor: Colors.white70,
+                                            filled: true,
+                                            prefixIcon: Icon(Icons.timer),
+                                            suffix: CustomText(
+                                              text: 'minut',
+                                              fontSize: 15.0,
+                                            ),
+                                            errorStyle: TextStyle(
+                                                fontFamily: 'Roboto',
+                                                fontSize: 13.0)),
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(fontSize: 25.0),
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Ustaw czas';
+                                          } else if (double.tryParse(value) ==
+                                              null) {
+                                            return 'Tylko liczby!';
+                                          }
+                                          return null;
+                                        },
+                                        onChanged: (value) => this
+                                            ._textFieldValue = int.parse(value),
+                                        onFieldSubmitted: (value) {
+                                          if (_formKey.currentState
+                                              .validate()) {
+                                            setState(() {
+                                              timer = int.parse(value);
+                                              buttonError[0] = false;
+                                            });
+                                          }
+                                        },
+                                      ),
+                                      onFocusChange: (hasFocus) {
+                                        if (!hasFocus) {
+                                          if (_formKey.currentState
+                                              .validate()) {
+                                            setState(() {
+                                              timer = this._textFieldValue;
+                                              buttonError[0] = false;
+                                            });
+                                          }
+                                        }
+                                      },
                                     ),
-                                    errorStyle: TextStyle(
-                                        fontFamily: 'Roboto', fontSize: 13.0)),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 25.0),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Ustaw czas';
-                                  } else if (double.tryParse(value) == null) {
-                                    return 'Tylko liczby!';
-                                  }
-                                  return null;
-                                },
-                                onChanged: (value) =>
-                                    this._textFieldValue = int.parse(value),
-                                onFieldSubmitted: (value) {
-                                  if (_formKey.currentState.validate()) {
-                                    setState(() {
-                                      timer = int.parse(value);
-                                      buttonError[0] = false;
-                                    });
-                                  }
-                                },
-                              ),
-                              onFocusChange: (hasFocus) {
-                                if (!hasFocus) {
-                                  if (_formKey.currentState.validate()) {
-                                    setState(() {
-                                      timer = this._textFieldValue;
-                                      buttonError[0] = false;
-                                    });
-                                  }
-                                }
-                              },
+                                  ),
+                                ),
+                                Spacer(
+                                  flex: 2,
+                                ),
+                                RaisedButton.icon(
+                                    color: Colors.white60,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(15.0),
+                                        side:
+                                            BorderSide(color: Colors.black12)),
+                                    onPressed: () {
+                                      Navigator.pushNamed(context, '/teams');
+                                    },
+                                    icon: Icon(Icons.people),
+                                    label: CustomText(
+                                      text: 'Wybierz drużyny',
+                                      fontSize: 25.0,
+                                    )),
+                                Spacer(
+                                  flex: 2,
+                                ),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    //Check if timer was set
+                                    if (timer != null && timer >= 1) {
+                                      setState(() {
+                                        buttonError[0] = false;
+                                      });
+                                    } else {
+                                      setState(() {
+                                        buttonError[0] = true;
+                                      });
+                                      return;
+                                    }
+
+                                    //Read file
+                                    FileManager fileManager = new FileManager();
+                                    await fileManager.init();
+                                    this.players = fileManager.readFile();
+                                    this.whitePlayers.clear();
+                                    this.blackPlayers.clear();
+                                    if (this.players != null) {
+                                      if (this.players.isNotEmpty) {
+                                        this.players.forEach((player) {
+                                          if (player.isWhite) {
+                                            this.whitePlayers.add(player);
+                                          } else {
+                                            this.blackPlayers.add(player);
+                                          }
+                                        });
+                                      }
+                                      if (this.players.isEmpty) {
+                                        setState(() {
+                                          buttonError[1] = true;
+                                        });
+                                        return;
+                                      } else if (this.players.length >= 2) {
+                                        setState(() {
+                                          buttonError[1] = false;
+                                        });
+                                        if (this.whitePlayers.length > 0 &&
+                                            this.blackPlayers.length > 0) {
+                                          setState(() {
+                                            buttonError[2] = false;
+                                          });
+                                        } else {
+                                          setState(() {
+                                            buttonError[2] = true;
+                                          });
+                                          return;
+                                        }
+                                      } else {
+                                        setState(() {
+                                          buttonError[1] = false;
+                                          buttonError[2] = true;
+                                        });
+                                        return;
+                                      }
+                                    } else {
+                                      setState(() {
+                                        buttonError[1] = true;
+                                      });
+                                    }
+
+                                    //Check if every condition is met
+                                    if (buttonError[0] == false &&
+                                        buttonError[1] == false &&
+                                        buttonError[2] == false) {
+                                      Navigator.pushNamed(context, '/game',
+                                          arguments: GameInfo(timer, players,
+                                              whitePlayers, blackPlayers));
+                                    }
+                                  },
+                                  child: CustomText(
+                                      text: 'Graj!',
+                                      fontSize: 40.0,
+                                      weight: FontWeight.bold,
+                                      color: Colors.black),
+                                  style: ElevatedButton.styleFrom(
+                                      padding: EdgeInsets.all(15),
+                                      primary: Colors.white60,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(30.0),
+                                          side:
+                                              BorderSide(color: Colors.black))),
+                                ),
+                                Spacer(
+                                  flex: 1,
+                                ),
+                                Column(children: [
+                                  if (buttonError[0])
+                                    CustomText(
+                                      text:
+                                          'Długość gry musi być większa niż 30 sek!',
+                                      fontSize: 20.0,
+                                      color: Colors.red[400],
+                                    )
+                                  else if (buttonError[1])
+                                    CustomText(
+                                      text: 'Brak graczy.',
+                                      fontSize: 20.0,
+                                      color: Colors.red[400],
+                                    )
+                                  else if (buttonError[2])
+                                    CustomText(
+                                      text:
+                                          'Musi być przynajmniej jeden gracz w każdej drużynie.',
+                                      fontSize: 20.0,
+                                      color: Colors.red[400],
+                                    ),
+                                ]),
+                                Spacer(
+                                  flex: 3,
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          height: screenSize[1] * 0.045,
-                        ),
-                        RaisedButton.icon(
-                            color: Colors.white60,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15.0),
-                                side: BorderSide(color: Colors.black12)),
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/teams');
-                            },
-                            icon: Icon(Icons.people),
-                            label: CustomText(
-                              text: 'Wybierz drużyny',
-                              fontSize: 25.0,
-                            )),
-                        SizedBox(
-                          height: screenSize[1] * 0.05,
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            //Check if timer was set
-                            if (timer != null && timer >= 1) {
-                              setState(() {
-                                buttonError[0] = false;
-                              });
-                            } else {
-                              setState(() {
-                                buttonError[0] = true;
-                              });
-                              return;
-                            }
-
-                            //Read file
-                            FileManager fileManager = new FileManager();
-                            await fileManager.init();
-                            this.players = fileManager.readFile();
-                            this.whitePlayers.clear();
-                            this.blackPlayers.clear();
-                            if (this.players != null) {
-                              if (this.players.isNotEmpty) {
-                                this.players.forEach((player) {
-                                  if (player.isWhite) {
-                                    this.whitePlayers.add(player);
-                                  } else {
-                                    this.blackPlayers.add(player);
-                                  }
-                                });
-                              }
-                              if (this.players.isEmpty) {
-                                setState(() {
-                                  buttonError[1] = true;
-                                });
-                                return;
-                              } else if (this.players.length >= 2) {
-                                setState(() {
-                                  buttonError[1] = false;
-                                });
-                                if (this.whitePlayers.length > 0 &&
-                                    this.blackPlayers.length > 0) {
-                                  setState(() {
-                                    buttonError[2] = false;
-                                  });
-                                } else {
-                                  setState(() {
-                                    buttonError[2] = true;
-                                  });
-                                  return;
-                                }
-                              } else {
-                                setState(() {
-                                  buttonError[1] = false;
-                                  buttonError[2] = true;
-                                });
-                                return;
-                              }
-                            } else {
-                              setState(() {
-                                buttonError[1] = true;
-                              });
-                            }
-
-                            //Check if every condition is met
-                            if (buttonError[0] == false &&
-                                buttonError[1] == false &&
-                                buttonError[2] == false) {
-                              Navigator.pushNamed(context, '/game',
-                                  arguments: GameInfo(timer, players,
-                                      whitePlayers, blackPlayers));
-                            }
-                          },
-                          child: CustomText(
-                              text: 'Graj!',
-                              fontSize: 40.0,
-                              weight: FontWeight.bold,
-                              color: Colors.black),
-                          style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.all(15),
-                              primary: Colors.white60,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30.0),
-                                  side: BorderSide(color: Colors.black))),
-                        ),
-                        SizedBox(
-                          height: screenSize[1] * 0.03,
-                        ),
-                        Column(children: [
-                          if (buttonError[0])
-                            CustomText(
-                              text: 'Długość gry musi być większa niż 30 sek!',
-                              fontSize: 25.0,
-                              color: Colors.red[400],
-                            )
-                          else if (buttonError[1])
-                            CustomText(
-                              text: 'Brak graczy.',
-                              fontSize: 25.0,
-                              color: Colors.red[400],
-                            )
-                          else if (buttonError[2])
-                            CustomText(
-                              text:
-                                  'Musi być przynajmniej jeden gracz w każdej drużynie.',
-                              fontSize: 25.0,
-                              color: Colors.red[400],
-                            ),
-                        ])
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                  ]),
                 ]),
-              ),
-            ]),
           ),
           floatingActionButtonLocation:
               FloatingActionButtonLocation.miniEndFloat,
@@ -327,9 +343,9 @@ class _HomePageState extends State<HomePage> {
                         child: CustomText(
                           text: 'Alkoszachy to gra nastawiona na picie drużynowe, stąd im więcej osób' +
                               ' tym lepiej i łatwiej.\n\nGra oferuje dwa przyciski ze stoperem pokazujące' +
-                              ' czas pozostały do końca gry. Aby zakończyć swoją turę należy nacisnąć' +
-                              ' swój przycisk. Jednak po zbiciu odpowiedniej bierki, gracz naciska' +
-                              ' odpowiadający jej przycisk',
+                              ' czas pozostały do końca gry. Aby zakończyć turę należy nacisnąć' +
+                              ' swój przycisk.\nW przypadku gdy zostanie zbita bierka, gracz zbijający' +
+                              ' powinien nacisnąć odpowiadający jej przycisk',
                           fontSize: 18.0,
                         ),
                       ),
@@ -340,8 +356,8 @@ class _HomePageState extends State<HomePage> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: CustomText(
-                          text: 'a gra losuje z przeciwnej drużyny osoby' +
-                              ', które będą musiały wspólnie wypić liczbę kieliszków odpowiadającą' +
+                          text: 'a gra wylosuje osoby z drużyny przeciwnej, których zadaniem będzie' +
+                              ' wspólnie wypić liczbę kieliszków odpowiadającą' +
                               ' koszcie zbitej bierki.\n\nNa zakończenie wyświetlane jest podsumowanie' +
                               ', a gra kończy się w przypadku gdy któryś ze stoperów osiągnie wartość 0' +
                               ', bądź gdy zostanie kliknięty przycisk \'Króla\'',
