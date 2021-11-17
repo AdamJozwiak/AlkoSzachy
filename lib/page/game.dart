@@ -5,6 +5,7 @@ import 'package:alkoszachy/widgets/customText.dart';
 import 'package:alkoszachy/widgets/file_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:alkoszachy/widgets/stop_watch_timer.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 class Game extends StatefulWidget {
   const Game({Key key}) : super(key: key);
@@ -259,78 +260,35 @@ class _GameState extends State<Game> {
                   List<Player> selectedPlayers =
                       selectRandomPlayers(!isWhite, shots);
                   pauseGame();
-                  await showDialog(
-                      barrierDismissible: true,
-                      context: context,
-                      builder: (BuildContext context) {
-                        String drinkingPlayers = '';
-                        selectedPlayers.forEach((element) {
-                          drinkingPlayers += element.name +
-                              ' pije: ' +
-                              element.currentDrinks.toString();
-                          element.currentDrinks = 0;
-                          drinkingPlayers += '\n';
-                        });
-
-                        return Center(
-                          child: Container(
-                            width: screenSize[0] - 10,
-                            height:
-                                screenSize[1] + (30.0 * selectedPlayers.length),
-                            child: AlertDialog(
-                              titlePadding:
-                                  EdgeInsets.fromLTRB(0.0, 40.0, 0.0, 0.0),
-                              title: !isWhite
-                                  ? Center(
-                                      child: CustomText(
-                                          text: 'Biali piją: ' +
-                                              whiteTeamShots[1].toString() +
-                                              ' !',
-                                          weight: FontWeight.bold))
-                                  : Center(
-                                      child: CustomText(
-                                          text: 'Czarni piją: ' +
-                                              blackTeamShots[1].toString() +
-                                              ' !',
-                                          weight: FontWeight.bold)),
-                              content: !isWhite
-                                  ? Center(
-                                      child: Column(
-                                        children: [
-                                          Spacer(
-                                            flex: 2,
-                                          ),
-                                          CustomText(text: drinkingPlayers),
-                                          Spacer(
-                                            flex: 2,
-                                          ),
-                                          exitButton(context),
-                                          Spacer(
-                                            flex: 2,
-                                          )
-                                        ],
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Column(
-                                      children: [
-                                        Spacer(
-                                          flex: 1,
-                                        ),
-                                        CustomText(text: drinkingPlayers),
-                                        Spacer(
-                                          flex: 1,
-                                        ),
-                                        exitButton(context),
-                                        Spacer(
-                                          flex: 1,
-                                        )
-                                      ],
-                                    )),
-                            ),
-                          ),
-                        );
-                      });
+                  String drinkingPlayers = '';
+                  selectedPlayers.forEach((element) {
+                    drinkingPlayers += element.name +
+                        ' pije: ' +
+                        element.currentDrinks.toString();
+                    element.currentDrinks = 0;
+                    drinkingPlayers += '\n';
+                  });
+                  await Alert(
+                    context: context,
+                    image: Image.asset(
+                      'assets/alert.png',
+                      width: 180.0,
+                    ),
+                    title: (!isWhite ? 'Biali piją: ' : 'Czarni piją: ') +
+                        shots.toString() +
+                        '\n',
+                    desc: drinkingPlayers,
+                    buttons: [
+                      DialogButton(
+                        child: Text(
+                          "Wypite!",
+                          style: TextStyle(color: Colors.white, fontSize: 20),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        width: 120,
+                      )
+                    ],
+                  ).show();
                   fileManager.writeToFile(selectedPlayers);
                   if (shots == 7) {
                     kingPressed = true;
